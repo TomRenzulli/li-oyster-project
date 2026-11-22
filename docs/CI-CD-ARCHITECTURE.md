@@ -137,20 +137,21 @@ pulled in during `npm ci` to steal.
 
 **Applied to both `main` and `develop` (2026-11-21):**
 
-| Rule                      | Setting                                                                                                   |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Pull request required     | Yes, 0 approvals (solo operator; a PR is still a forced pause to read the diff)                           |
-| Required checks           | `Secret scan (TruffleHog)`, `Dependency + filesystem scan (Trivy)`, `Lint, format, types, audit`, `Build` |
-| Branch must be up to date | Yes — a green check on a stale base is not a green check                                                  |
-| Linear history            | Required, which matches the squash-merge workflow                                                         |
-| Force push / deletion     | Blocked                                                                                                   |
-| Conversation resolution   | Required before merge                                                                                     |
-| Applies to admins         | **No** — the owner can push directly in an emergency                                                      |
+| Rule                      | Setting                                                                                                                            |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Pull request required     | Yes, 0 approvals (solo operator; a PR is still a forced pause to read the diff)                                                    |
+| Required checks           | `Secret scan (TruffleHog)`, `Dependency + filesystem scan (Trivy)`, `Lint, format, types, audit`, `Build`, `Lighthouse (95 floor)` |
+| Branch must be up to date | Yes — a green check on a stale base is not a green check                                                                           |
+| Linear history            | Required, which matches the squash-merge workflow                                                                                  |
+| Force push / deletion     | Blocked                                                                                                                            |
+| Conversation resolution   | Required before merge                                                                                                              |
+| Applies to admins         | **No** — the owner can push directly in an emergency                                                                               |
 
-Lighthouse is deliberately **not** a required check: it runs on a deployment event after the
-merge, never on the PR, so requiring it would deadlock every merge. It is a post-merge alarm
-on `develop`, which is what the staging preview is for — a `develop` audit below 95 is fixed
-before the promotion PR into `main` is opened.
+**`Lighthouse (95 floor)` became a required check on 2026-11-22**, once it moved to a local
+audit that runs on every PR. That is the brief's release gate, so it belongs in the required
+set now that it can actually report on a pull request. The separate
+`lighthouse-production.yml` is **not** required and never will be: it runs on a schedule after
+the merge, so requiring it would deadlock every merge.
 
 Admin bypass is a deliberate trade for a one-person project: the gates catch the ordinary
 mistakes, and the owner is not locked out of their own production branch during an incident.
