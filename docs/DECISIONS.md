@@ -125,6 +125,10 @@ Format: date — decision — why — who decided.
   locally and therefore blocks every PR, and `lighthouse-production.yml` measures the real CDN
   daily. A gate that runs and measures slightly less beats a faithful one that never
   fires. — engineering
+- **The preview server is started in its own CI step, not via Lighthouse CI's
+  `startServerCommand`.** `astro preview` in Astro 7 daemonizes — the foreground process exits
+  as soon as it prints the pid — so Lighthouse CI would see its child die and fail while the
+  server was actually up. Confirmed locally. — engineering
 - **Cloudflare project must be Pages, not a Worker.** The repo was initially connected to a
   Worker (`longislandoysterfarm`), whose builds failed. Workers Builds has no `functions/`
   file-based routing, so the Phase 2 `functions/api/submit.ts` would never have been served.

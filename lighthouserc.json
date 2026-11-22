@@ -2,14 +2,6 @@
   "ci": {
     "collect": {
       "numberOfRuns": 3,
-      "startServerCommand": "npm run preview -- --port 4321 --host 127.0.0.1",
-      "startServerReadyPattern": "ready|localhost|127.0.0.1",
-      "startServerReadyTimeout": 60000,
-      "url": [
-        "http://127.0.0.1:4321/",
-        "http://127.0.0.1:4321/farms/",
-        "http://127.0.0.1:4321/methodology/"
-      ],
       "settings": { "preset": "desktop" }
     },
     "assert": {

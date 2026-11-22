@@ -151,13 +151,33 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      - name: Audit the build via astro preview
-        # Audits a local `astro preview` of dist/ rather than the deployed
-        # site. Cloudflare's Git integration emits no GitHub deployment event
-        # to hang this off (see lighthouse-production.yml), and a gate that
-        # cannot run is not a gate. Serving dist/ locally keeps this blocking
-        # on every PR, which is where a performance or accessibility
-        # regression is cheapest to fix.
+      - name: Serve the build
+        # Started as its own step rather than through Lighthouse CI's
+        # `startServerCommand`, because `astro preview` in Astro 7
+        # DAEMONIZES: it prints "Preview server running at ... (pid N)" and
+        # the foreground process exits immediately. Lighthouse CI watches the
+        # child it spawned, so it would conclude the server had died while the
+        # server was in fact serving fine. Starting it here and polling for a
+        # 200 sidesteps that entirely.
+        run: |
+          npx astro preview --port 4321 --host 127.0.0.1 &
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://127.0.0.1:4321/; then
+              echo "Preview server up after ${i}s."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Preview server never answered on 127.0.0.1:4321."
+          exit 1
+
+      - name: Audit the build
+        # Audits the local preview of dist/ rather than the deployed site.
+        # Cloudflare's Git integration emits no GitHub deployment event to
+        # hang this off (see lighthouse-production.yml), and a gate that
+        # cannot run is not a gate. Auditing locally keeps this blocking on
+        # every PR, which is where a performance or accessibility regression
+        # is cheapest to fix.
         #
         # What this does NOT measure: real CDN latency, Brotli, TLS, and the
         # headers in public/_headers (astro preview does not apply them). The
@@ -165,6 +185,14 @@ jobs:
         # or style survives; lighthouse-production.yml covers the rest daily.
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
         with:
+          urls: |
+            http://127.0.0.1:4321/
+            http://127.0.0.1:4321/farms/
+            http://127.0.0.1:4321/methodology/
           configPath: ./lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true
+
+      - name: Stop the preview server
+        if: always()
+        run: npx astro preview stop || true

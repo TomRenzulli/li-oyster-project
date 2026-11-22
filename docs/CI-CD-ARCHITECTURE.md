@@ -97,6 +97,14 @@ covered elsewhere:
 A gate that runs on every PR and measures slightly less is worth more than a faithful gate
 that never fires.
 
+**Why the preview server is started as its own step, not by `startServerCommand`.** Lighthouse
+CI can start a server itself and wait for a ready pattern, which is the obvious way to do
+this. It does not work here: **`astro preview` in Astro 7 daemonizes.** It prints
+`Preview server running at … (pid N)` and the foreground process exits immediately. Lighthouse
+CI watches the child it spawned, so it would conclude the server had died while the server was
+serving fine. The workflow starts it in its own step, polls for a 200 for up to 30 seconds,
+and stops it with `astro preview stop` in an `if: always()` step.
+
 **Why the production audit validates its own target.** `workflow_dispatch` takes a URL input,
 and the job accepts only the apex or its `www` alias. It also `curl`s for a 200 first, so a
 parked page or a 522 fails loudly instead of as four mysterious sub-95 scores.

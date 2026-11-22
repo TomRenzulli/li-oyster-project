@@ -82,6 +82,6 @@ jobs:
             ${{ steps.target.outputs.url }}/
             ${{ steps.target.outputs.url }}/farms/
             ${{ steps.target.outputs.url }}/methodology/
-          configPath: ./lighthouserc.production.json
+          configPath: ./lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true
