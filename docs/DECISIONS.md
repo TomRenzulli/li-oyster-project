@@ -115,12 +115,23 @@ Format: date — decision — why — who decided.
   from the deploy boundary to the merge boundary, and the only way to deploy unchecked code is
   a deliberate admin-bypass direct push. Documented plainly in `docs/DEPLOY.md` rather than
   left as a surprise. — engineering
-- **Lighthouse moved to its own workflow, triggered by `deployment_status`.** With Git
-  integration, Actions cannot know when Cloudflare finished or what per-deployment preview
-  hostname it used; Cloudflare reports both back as a GitHub deployment status carrying
-  `environment_url`. The job allowlists that URL to `*.pages.dev` or the production apex,
-  because `environment_url` is settable by anyone who can create a deployment and an audit
-  must not be pointable at an arbitrary host. — engineering
+- **Lighthouse gate audits a local `astro preview`; a separate daily workflow audits
+  production.** The first attempt triggered Lighthouse on `deployment_status`, assuming
+  Cloudflare reports deployments to GitHub. **It does not** — Pages' and Workers' native Git
+  integrations create _check runs and PR comments only_, no GitHub Deployment object, so the
+  event never fires. Verified 2026-11-22: the repo's `/deployments` API is empty despite
+  completed Cloudflare builds. Scraping the preview URL out of a check run's prose summary was
+  the alternative and is too fragile to gate a release on. So the gate audits `dist/` served
+  locally and therefore blocks every PR, and `lighthouse-production.yml` measures the real CDN
+  daily. A gate that runs and measures slightly less beats a faithful one that never
+  fires. — engineering
+- **Cloudflare project must be Pages, not a Worker.** The repo was initially connected to a
+  Worker (`longislandoysterfarm`), whose builds failed. Workers Builds has no `functions/`
+  file-based routing, so the Phase 2 `functions/api/submit.ts` would never have been served.
+  Staying on Workers would have meant a `wrangler.jsonc` with `assets.directory`, an
+  `.assetsignore`, and rewriting the Function as a Worker entrypoint with hand-rolled routing.
+  Pages keeps `_headers`, `_redirects` and the Function working unchanged. — owner's decision,
+  2026-11-22
 - **No break-glass `wrangler pages deploy` in the runbook.** Documenting it would require
   minting a Pages:Edit token during an incident, which is when scope discipline is weakest.
   Dashboard rollback plus fix-forward covers the realistic failures. — engineering

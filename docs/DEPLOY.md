@@ -9,9 +9,9 @@ integration**. Cloudflare watches the repo, builds it, and serves it:
 | `develop`   | Preview (= staging)   | `develop.<project>.pages.dev` |
 | `feature/*` | Preview               | per-deployment `*.pages.dev`  |
 
-GitHub Actions does **not** deploy and holds no Cloudflare credential. It runs the checks
-(`ci-cd.yml`) and, after Cloudflare reports a deployment, the Lighthouse audit
-(`lighthouse.yml`). See [CI-CD-ARCHITECTURE.md](CI-CD-ARCHITECTURE.md).
+GitHub Actions does **not** deploy and holds no Cloudflare credential. It runs the checks and
+the Lighthouse gate (`ci-cd.yml`), plus a daily audit of the live site
+(`lighthouse-production.yml`). See [CI-CD-ARCHITECTURE.md](CI-CD-ARCHITECTURE.md).
 
 **The trade to know about:** Cloudflare builds on _push_, not on _green_. It does not read
 GitHub check status, so a push to `develop` that fails CI is still built and served at the
@@ -19,6 +19,14 @@ preview URL. The gates are enforced at the merge boundary by branch protection i
 is why `main` and `develop` are protected, require a PR, and are never pushed to directly.
 
 ## One-time setup
+
+### 0. If a Worker is connected to this repo, remove it first
+
+The initial setup connected the repo to a **Worker** (`longislandoysterfarm`) rather than a
+Pages project. That is a different product: Workers Builds has no `functions/` file-based
+routing, so `functions/api/submit.ts` would never be served, and its builds failed. Delete
+that Worker (Cloudflare dashboard → Workers & Pages → the Worker → Settings → Delete), or at
+minimum disconnect it from the repo so it stops posting a failing check on every PR.
 
 ### 1. Connect the Pages project to the repo
 

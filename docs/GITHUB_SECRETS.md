@@ -35,9 +35,9 @@ Profile → API Tokens), because deleting the GitHub secret does not invalidate 
   `.git/config` for a later step to find.
 - Because no job reads a secret, a pull request from a fork is not a credential-exposure risk
   at all — there is nothing in the environment to exfiltrate.
-- `lighthouse.yml` runs on `deployment_status`, an event whose payload is partly
-  attacker-controlled (`environment_url`). It therefore allowlists the URL it will audit to
-  `*.pages.dev` and the production apex, and still reads no secret.
+- `lighthouse-production.yml` runs on a schedule and on manual dispatch. Its dispatch input is
+  a URL, so it allowlists that to the apex or its `www` alias rather than auditing whatever it
+  is handed. It reads no secret either.
 
 ## Where the real secrets live: Cloudflare
 

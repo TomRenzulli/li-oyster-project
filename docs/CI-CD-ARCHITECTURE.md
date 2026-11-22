@@ -4,8 +4,8 @@ Two workflow files, and neither one deploys anything.
 
 - **`.github/workflows/ci-cd.yml`** — the gates. Runs on PRs into `main` and `develop`, on
   pushes to those branches, and on manual dispatch.
-- **`.github/workflows/lighthouse.yml`** — the performance/a11y release floor. Triggered by
-  `deployment_status`, which is Cloudflare telling GitHub a deployment went live.
+- **`.github/workflows/lighthouse-production.yml`** — a daily audit of the live site. Not a
+  gate; an alarm.
 
 Deployment itself is **Cloudflare Pages' Git integration**: Cloudflare watches this repo,
 builds it, and serves it. `main` is production, `develop` is the staging preview. Actions
@@ -16,14 +16,12 @@ never deploys and never holds a Cloudflare credential.
 ```
 feature/*  --PR-->  develop  --PR-->  main
    |                  |                 |
- checks             checks            checks         (GitHub Actions)
+ checks + Lighthouse (GitHub Actions, blocking on every PR)
                       |                 |
             Cloudflare builds    Cloudflare builds   (Pages Git integration)
             *.pages.dev preview  longislandoysterfarm.com
-                      |                 |
-                      +-------+---------+
-                              |
-                   deployment_status -> Lighthouse   (GitHub Actions)
+                                         |
+                              daily Lighthouse audit  (GitHub Actions, alarm)
 ```
 
 Squash-merge everywhere, so `develop` and `main` stay one-commit-per-change and a revert is
@@ -31,13 +29,16 @@ one commit.
 
 ## Jobs
 
-| Job                      | Runs on                            | Fails when                                                                                                           |
-| ------------------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `secrets`                | every event                        | TruffleHog finds a **verified** secret anywhere in the repo, including history                                       |
-| `vulnerabilities`        | every event                        | Trivy finds a HIGH/CRITICAL, fixable vulnerability, secret or misconfiguration                                       |
-| `quality`                | every event                        | ESLint, Prettier, `astro check`, `npm audit --audit-level=high`, or `verify:data` fails                              |
-| `build`                  | after the three gates              | The build fails, `dist/_headers` is missing its CSP, an inline script or style survived, or an internal link is dead |
-| `audit` (lighthouse.yml) | a successful Cloudflare deployment | Any of performance / a11y / best-practices / SEO scores below 95                                                     |
+| Job               | Runs on               | Fails when                                                                                                           |
+| ----------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `secrets`         | every event           | TruffleHog finds a **verified** secret anywhere in the repo, including history                                       |
+| `vulnerabilities` | every event           | Trivy finds a HIGH/CRITICAL, fixable vulnerability, secret or misconfiguration                                       |
+| `quality`         | every event           | ESLint, Prettier, `astro check`, `npm audit --audit-level=high`, or `verify:data` fails                              |
+| `build`           | after the three gates | The build fails, `dist/_headers` is missing its CSP, an inline script or style survived, or an internal link is dead |
+| `lighthouse`      | after `build`         | Any of performance / a11y / best-practices / SEO scores below 95 on a local `astro preview` of the build             |
+
+Separately, `lighthouse-production.yml` audits the live domain daily and on manual dispatch.
+It is an alarm, not a gate.
 
 Gates run in parallel; `build` needs all three.
 
@@ -75,22 +76,30 @@ separate fine-grained PAT, not the Actions token.
 sitting in `.git/config` where any later step — or a compromised dependency running during
 `npm ci` — could read and reuse it.
 
-**Why Lighthouse runs against the deployed URL, not a local server.** The release gate should
-measure what Cloudflare actually serves: real headers, real compression, real CDN. A local
-preview can pass while the deployed site fails on a CSP violation or a caching header.
+**Why the Lighthouse gate audits a local `astro preview`, not the deployed site.** Auditing
+the real deployment is better in principle — real CDN, real compression, real headers — and
+that was the original design. It does not work with Cloudflare's native Git integration.
+Cloudflare reports builds to GitHub as **check runs and PR comments only**; it creates no
+GitHub Deployment object, so the `deployment_status` event never fires and there is nothing to
+trigger on. Verified 2026-11-22: `GET /repos/TomRenzulli/li-oyster-project/deployments` is
+empty despite completed Cloudflare builds. The alternative — scraping the preview URL out of a
+check run's human-readable summary — is too fragile to hang a release gate on.
 
-**Why Lighthouse is triggered by `deployment_status` rather than by a push.** With Git
-integration, Actions has no way to know when Cloudflare finished building or what URL the
-result landed on — preview hostnames are per-deployment. Cloudflare reports each deployment
-back to GitHub as a deployment status carrying `environment_url`, so that event is both the
-"it is live now" signal and the address to audit. No polling, no guessed hostname, no API
-token.
+So the gate moved to where it can actually run on every PR, and the fidelity it loses is
+covered elsewhere:
 
-**Why the Lighthouse job allowlists the URL it audits.** `environment_url` is attacker-
-supplied in the general case: anyone who can create a deployment on this repo can set it. The
-job therefore runs only for `state == 'success'` and only when the URL is a `*.pages.dev` host
-or the production apex, so the audit cannot be pointed at an arbitrary third-party site with
-this repo's workflow run attached to it.
+| What a local audit cannot see   | Covered by                                          |
+| ------------------------------- | --------------------------------------------------- |
+| `public/_headers` being applied | `build` asserts the file ships with a CSP in it     |
+| Inline script/style vs the CSP  | `build` asserts the build emits none                |
+| Real CDN, Brotli, TLS           | `lighthouse-production.yml`, daily against the apex |
+
+A gate that runs on every PR and measures slightly less is worth more than a faithful gate
+that never fires.
+
+**Why the production audit validates its own target.** `workflow_dispatch` takes a URL input,
+and the job accepts only the apex or its `www` alias. It also `curl`s for a 200 first, so a
+parked page or a 522 fails loudly instead of as four mysterious sub-95 scores.
 
 **Why deploying from Cloudflare instead of from Actions.** The alternative was
 `wrangler-action` with a `CLOUDFLARE_API_TOKEN` repository secret. Git integration removes

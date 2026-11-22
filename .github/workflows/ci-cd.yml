@@ -2,8 +2,9 @@ name: ci-cd
 
 # Checks only. Deployment is Cloudflare Pages' own Git integration: it builds
 # from this repo directly (main -> production, develop -> staging preview), so
-# no deploy credential ever enters GitHub Actions. Lighthouse runs separately,
-# in lighthouse.yml, triggered by the deployment Cloudflare reports back.
+# no deploy credential ever enters GitHub Actions. The Lighthouse release gate
+# runs here against a local preview of the build; lighthouse-production.yml
+# audits the live site on a schedule.
 # All third-party actions are pinned to a commit SHA, with the human-readable
 # tag in the trailing comment. Dependabot bumps both together.
 
@@ -134,3 +135,36 @@ jobs:
 
       - name: Check internal links
         run: npm run check:links
+
+  lighthouse:
+    name: Lighthouse (95 floor)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: Audit the build via astro preview
+        # Audits a local `astro preview` of dist/ rather than the deployed
+        # site. Cloudflare's Git integration emits no GitHub deployment event
+        # to hang this off (see lighthouse-production.yml), and a gate that
+        # cannot run is not a gate. Serving dist/ locally keeps this blocking
+        # on every PR, which is where a performance or accessibility
+        # regression is cheapest to fix.
+        #
+        # What this does NOT measure: real CDN latency, Brotli, TLS, and the
+        # headers in public/_headers (astro preview does not apply them). The
+        # `build` job asserts the headers file ships and that no inline script
+        # or style survives; lighthouse-production.yml covers the rest daily.
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
+        with:
+          configPath: ./lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
