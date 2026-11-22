@@ -48,8 +48,11 @@ jobs:
           # wrapper's default is `trufflehog:latest` — an unpinned container
           # pulled on every run, which is the same supply-chain hole the SHA
           # pinning exists to close. Dependabot bumps the SHA; this version
-          # moves with it.
-          version: v3.100.0
+          # moves with it. Note the image tag has no "v" prefix, unlike the
+          # git tag. Verified 2026-11-21: ghcr tags `3.100.0` and `latest`
+          # both resolve to sha256:8fd07ea46a3f59583c4d50f006d8cf150530141b
+          # 28969c3c34cc455cb9165a6b.
+          version: 3.100.0
 
   vulnerabilities:
     name: Dependency + filesystem scan (Trivy)
