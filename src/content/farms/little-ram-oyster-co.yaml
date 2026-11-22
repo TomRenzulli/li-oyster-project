@@ -1,0 +1,41 @@
+name: Little Ram Oyster Co.
+type:
+  - farm
+oyster_brands:
+  - name: Little Ram
+    waterbody: Gardiners Bay
+    sources:
+      - url: https://littleramoysters.com/
+        label: Little Ram Oyster Co. — official site, homepage
+        accessed: 2026-11-21
+species:
+  - Crassostrea virginica
+waterbody: Gardiners Bay
+region: North Fork
+website: https://littleramoysters.com/
+email: stef@littleramoysters.com
+instagram: littleramoysters
+facebook: LittleRamOysters
+sells_direct: true
+offers_tours: true
+description: >-
+  A woman-owned oyster farm growing in Gardiners Bay off Long Island's North
+  Fork. Oysters are sold directly from a self-serve farmstand on weekends, and
+  the farm takes bookings to get people out on the water to see how the bay is
+  worked and to shuck a few. Seasonal preorders run around the holidays.
+sources:
+  - url: https://littleramoysters.com/
+    label: Little Ram Oyster Co. — official site, homepage
+    accessed: 2026-11-21
+last_verified: 2026-11-21
+verification_notes: >-
+  Open: town/hamlet is not stated on the site (it says only "Long Island's
+  North Fork"), so `town` is deliberately omitted. The Suffolk County ALP lists
+  a lease to "Cornelius & Little Ram Oyster Co. LLC" in Shelter Island township
+  — plausibly related, but linking that legal entity to this business is an
+  inference, so no lease record and no town is attached here. Phone, street
+  address, wholesale, shipping, farming method and restoration involvement are
+  not stated on the homepage. Sub-pages (/oysters, /our-story, /farmstand,
+  /shop) were not read and may carry some of these.
+claimed: false
+featured: false

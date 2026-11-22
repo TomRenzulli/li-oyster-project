@@ -1,0 +1,250 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import VerifiedBadge from '../../components/VerifiedBadge.astro';
+import { getAllFarms, slugify } from '../../lib/farms';
+
+export const getStaticPaths = (async () => {
+  const farms = await getAllFarms();
+  return farms.map((farm) => ({ params: { slug: farm.id }, props: { farm } }));
+}) satisfies GetStaticPaths;
+
+const { farm } = Astro.props;
+const d = farm.data;
+const site = Astro.site?.href ?? 'https://longislandoysterfarm.com/';
+const url = new URL(`/farms/${farm.id}/`, site).href;
+
+const place = [d.hamlet, d.town && `Town of ${d.town}`, d.waterbody].filter(Boolean).join(' · ');
+
+/** Only assert what the listing actually holds. */
+const facts: { label: string; value: string }[] = [
+  { label: 'Type', value: d.type.join(', ') },
+  { label: 'Waterbody', value: d.waterbody ?? '' },
+  { label: 'Town', value: d.town ?? '' },
+  { label: 'Hamlet', value: d.hamlet ?? '' },
+  { label: 'Region', value: d.region ?? '' },
+  { label: 'Species', value: d.species.join(', ') },
+  { label: 'Other species', value: d.other_species.join(', ') },
+  { label: 'Farming method', value: d.farming_method.join(', ') },
+  { label: 'Season', value: d.seasonality ?? '' },
+  { label: 'Address', value: d.address ?? '' },
+];
+
+const yesNo = (v: boolean | undefined) => (v === true ? 'Yes' : v === false ? 'No' : 'Not listed');
+const offerings: { label: string; value: boolean | undefined }[] = [
+  { label: 'Sells direct to the public', value: d.sells_direct },
+  { label: 'Sells wholesale', value: d.sells_wholesale },
+  { label: 'Offers tours', value: d.offers_tours },
+  { label: 'Ships', value: d.ships },
+  { label: 'Subscription or CSA', value: d.csa_or_subscription },
+  { label: 'Restoration partner', value: d.restoration_partner },
+];
+
+const schema: Record<string, unknown>[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': d.type.includes('retail/raw bar') ? 'FoodEstablishment' : 'LocalBusiness',
+    name: d.name,
+    url,
+    ...(d.website ? { sameAs: [d.website] } : {}),
+    ...(d.phone ? { telephone: d.phone } : {}),
+    ...(d.email ? { email: d.email } : {}),
+    ...(d.address
+      ? {
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: d.address,
+            addressRegion: 'NY',
+            addressCountry: 'US',
+          },
+        }
+      : {}),
+    ...(d.geo
+      ? { geo: { '@type': 'GeoCoordinates', latitude: d.geo.lat, longitude: d.geo.lng } }
+      : {}),
+    description: d.description,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: site },
+      { '@type': 'ListItem', position: 2, name: 'Farms', item: new URL('/farms/', site).href },
+      { '@type': 'ListItem', position: 3, name: d.name, item: url },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title={d.name}
+  description={`${d.name}: ${d.description.slice(0, 150).trim()}`}
+  noindex={d.status === 'closed' || d.status === 'merged'}
+  ogRoute={`farms/${farm.id}`}
+>
+  <JsonLd schema={schema} />
+
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span>
+    <a href="/farms/">Farms</a> <span aria-hidden="true">/</span>
+    <span>{d.name}</span>
+  </nav>
+
+  <h1 class="font-display mt-2 text-4xl">{d.name}</h1>
+  {place && <p class="text-shell-600 mt-2">{place}</p>}
+
+  {d.status !== 'active' && (
+    <p class="border-brass-400 bg-brass-300/20 mt-4 rounded border p-3">
+      <strong>Status: {d.status}.</strong>{' '}
+      {d.status === 'unconfirmed' &&
+        'We have a public source for this operation but have not been able to confirm it is currently active.'}
+      {d.status === 'closed' &&
+        'This operation appears to have closed. The page is kept so old links still resolve.'}
+    </p>
+  )}
+
+  <div class="mt-5">
+    <VerifiedBadge date={String(d.last_verified)} />
+  </div>
+
+  <p class="mt-6 max-w-prose text-lg">{d.description}</p>
+
+  {d.oyster_brands.length > 0 && (
+    <section class="mt-10" aria-labelledby="brands">
+      <h2 id="brands" class="text-2xl">
+        Oysters they sell
+      </h2>
+      <ul class="mt-3 flex flex-wrap gap-2">
+        {d.oyster_brands.map((b) => (
+          <li class="border-navy-200 bg-salt-50 rounded border px-3 py-1.5">
+            <a href={`/oysters/${slugify(b.name)}/`}>{b.name}</a>
+            {b.waterbody && <span class="text-shell-600 text-sm"> — {b.waterbody}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="mt-10" aria-labelledby="details">
+    <h2 id="details" class="text-2xl">
+      Details
+    </h2>
+    <dl class="border-navy-200 mt-3 divide-navy-100 divide-y rounded border">
+      {facts
+        .filter((f) => f.value)
+        .map((f) => (
+          <div class="grid gap-1 px-4 py-3 sm:grid-cols-3">
+            <dt class="text-shell-600 text-sm">{f.label}</dt>
+            <dd class="sm:col-span-2 capitalize">{f.value}</dd>
+          </div>
+        ))}
+      {offerings.map((o) => (
+        <div class="grid gap-1 px-4 py-3 sm:grid-cols-3">
+          <dt class="text-shell-600 text-sm">{o.label}</dt>
+          <dd class="sm:col-span-2">{yesNo(o.value)}</dd>
+        </div>
+      ))}
+    </dl>
+    <p class="text-shell-600 mt-2 text-sm">
+      "Not listed" means we could not verify it from a public source — not that the answer is no.{' '}
+      <a href="/claim/">Farms can correct this.</a>
+    </p>
+  </section>
+
+  {(d.website || d.phone || d.email || d.instagram || d.facebook) && (
+    <section class="mt-10" aria-labelledby="contact">
+      <h2 id="contact" class="text-2xl">
+        Contact
+      </h2>
+      <ul class="mt-3 space-y-1.5">
+        {d.website && (
+          <li>
+            Website:{' '}
+            <a href={d.website} rel="noopener">
+              {d.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+            </a>
+          </li>
+        )}
+        {d.phone && (
+          <li>
+            Phone: <a href={`tel:${d.phone.replace(/[^+\d]/g, '')}`}>{d.phone}</a>
+          </li>
+        )}
+        {d.email && (
+          <li>
+            Email: <a href={`mailto:${d.email}`}>{d.email}</a>
+          </li>
+        )}
+        {d.instagram && (
+          <li>
+            Instagram:{' '}
+            <a href={`https://instagram.com/${d.instagram}`} rel="noopener">
+              @{d.instagram}
+            </a>
+          </li>
+        )}
+        {d.facebook && (
+          <li>
+            Facebook:{' '}
+            <a href={`https://facebook.com/${d.facebook}`} rel="noopener">
+              {d.facebook}
+            </a>
+          </li>
+        )}
+      </ul>
+    </section>
+  )}
+
+  {d.leases.length > 0 && (
+    <section class="mt-10" aria-labelledby="leases">
+      <h2 id="leases" class="text-2xl">
+        Aquaculture leases
+      </h2>
+      <p class="text-shell-600 mt-2 max-w-prose text-sm">
+        Lease sites recorded in the Suffolk County Shellfish Aquaculture Lease Program. A lease site
+        is an area of bay bottom, not a place the public can visit.
+      </p>
+      <ul class="mt-3 space-y-2">
+        {d.leases.map((l) => (
+          <li class="border-navy-200 bg-salt-50 rounded border px-4 py-3">
+            <span class="font-semibold">{l.lease_id}</span>
+            <span class="text-shell-600"> — {l.status}</span>
+            {l.term && <span class="text-shell-600"> · {l.term}</span>}
+            <br />
+            <span class="text-sm">Lessee of record: {l.lessee}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="mt-10" aria-labelledby="sources">
+    <h2 id="sources" class="text-2xl">
+      Sources
+    </h2>
+    <p class="mt-2 max-w-prose">
+      Everything above comes from these. Nothing on this page is inferred or estimated.
+    </p>
+    <ol class="mt-3 space-y-2">
+      {d.sources.map((s) => (
+        <li>
+          <a href={s.url} rel="noopener nofollow">
+            {s.label}
+          </a>
+          <span class="text-shell-600 text-sm"> — accessed {String(s.accessed)}</span>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="border-navy-200 bg-salt-50 mt-12 rounded border p-5" aria-labelledby="fix">
+    <h2 id="fix" class="text-xl">
+      Something wrong here?
+    </h2>
+    <p class="mt-2 max-w-prose">
+      If this is your farm, you can <a href="/claim/">claim this listing</a> to correct it, or ask
+      for it to be removed. Removal requests are honoured without argument.
+    </p>
+  </section>
+</BaseLayout>

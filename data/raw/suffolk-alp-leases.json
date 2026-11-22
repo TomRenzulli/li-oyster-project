@@ -1,0 +1,388 @@
+{
+  "retrieved": "2026-11-22",
+  "source": {
+    "name": "Suffolk County Shellfish Aquaculture Lease Program — live 10-acre lease sites",
+    "service": "https://gis.suffolkcountyny.gov/server/rest/services/PlanningSQLData/Live10AcreLeaseSitePolygon/FeatureServer/0",
+    "page": "https://suffolkcountyny.gov/Departments/Economic-Development-and-Planning/Planning-and-Environment/Environmental-Planning-and-Aquaculture/Aquaculture-Lease-Program/Inventory-of-Current-Leases"
+  },
+  "caveats": [
+    "The ALP covers Peconic and Gardiners Bay system lease sites only. South Shore growers (Great South Bay, Moriches, Shinnecock) and growers on private oyster grants or town permits are NOT in this dataset, so absence here is not evidence a farm does not exist.",
+    "A lease is not a business. Lessees include private individuals; those are not listings and their names are not published unless the business itself publishes them.",
+    "Lessee names are the legal entity on the lease and are often not the brand the farm sells under.",
+    "Lease centroid coordinates describe a water lease site, not a business address or a place the public can visit."
+  ],
+  "total_sites_in_service": 568,
+  "held_sites": 41,
+  "distinct_lessees": 33,
+  "leases": [
+    {
+      "lease_id": "T33",
+      "lessee": "Cherry Harbor Oysters LP",
+      "status": "Leased",
+      "term": "January 01, 2025 - December 31, 2034",
+      "lat": 41.07313258,
+      "lng": -72.10806288,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "792",
+      "lessee": "Cornelius & Little Ram Oyster Co. LLC",
+      "status": "Leased",
+      "term": "January 1, 2023 - December 31, 2032",
+      "lat": 41.09260155,
+      "lng": -72.31373935,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "796",
+      "lessee": "Cornelius & Little Ram Oyster Co. LLC",
+      "status": "Leased",
+      "term": "January. 01, 2025 - December 31, 2034",
+      "lat": 41.09255219,
+      "lng": -72.31035385,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "290",
+      "lessee": "Davy Jones Landing LLC",
+      "status": "Pending",
+      "term": "No Executed Lease",
+      "lat": 40.96175884,
+      "lng": -72.48660321,
+      "last_update": "2026-11-20"
+    },
+    {
+      "lease_id": "313",
+      "lessee": "Davy Jones Landing LLC",
+      "status": "Leased",
+      "term": "January 01, 2023 - December 31, 2032",
+      "lat": 40.96427595,
+      "lng": -72.48316574,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "834",
+      "lessee": "East Hampton Oyster Company LLC",
+      "status": "Leased",
+      "term": "January 1, 2026 - December 31, 2035",
+      "lat": 41.03455657,
+      "lng": -72.28530118,
+      "last_update": "2026-04-22"
+    },
+    {
+      "lease_id": "619",
+      "lessee": "Founders Oyster Farm LLC",
+      "status": "Leased",
+      "term": "January 1, 2019 -  December 31, 2028",
+      "lat": 41.06351506,
+      "lng": -72.38989447,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "437",
+      "lessee": "Hampton Oyster Co. LLC",
+      "status": "Leased",
+      "term": "January 01, 2026 - December 31, 2035",
+      "lat": 41.02260252,
+      "lng": -72.43785197,
+      "last_update": "2026-09-28"
+    },
+    {
+      "lease_id": "694",
+      "lessee": "JBH of Peconic Inc.",
+      "status": "Leased",
+      "term": "January 01, 2025 - December 31, 2034",
+      "lat": 41.01910778,
+      "lng": -72.37027543,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "797",
+      "lessee": "JBH of Peconic Inc.",
+      "status": "Leased",
+      "term": "January 1, 2026 - December 31, 2035",
+      "lat": 41.04900999,
+      "lng": -72.31140781,
+      "last_update": "2026-09-22"
+    },
+    {
+      "lease_id": "T1",
+      "lessee": "Jeff Armstrong",
+      "status": "Leased",
+      "term": "January 1, 2025 - December 31, 2034",
+      "lat": 40.94013671,
+      "lng": -72.55993178,
+      "last_update": "2026-04-22"
+    },
+    {
+      "lease_id": "6",
+      "lessee": "Kimberly Barbour",
+      "status": "Leased",
+      "term": "January 01, 2026 - December 31, 2035",
+      "lat": 40.92348979,
+      "lng": -72.56862331,
+      "last_update": "2026-11-20"
+    },
+    {
+      "lease_id": "T21",
+      "lessee": "Long Island Shellfish Company Inc.",
+      "status": "Leased",
+      "term": "January 1, 2023 - December 31, 2032",
+      "lat": 41.03591613,
+      "lng": -72.25464904,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "333",
+      "lessee": "Manna Fish Farms Inc.",
+      "status": "Leased",
+      "term": "January 01, 2023 - December 31, 2032",
+      "lat": 40.910486,
+      "lng": -72.48439363,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "810",
+      "lessee": "Mark Alexander Pagano",
+      "status": "Leased",
+      "term": "January 1, 2019 -  December 31, 2028",
+      "lat": 41.09748418,
+      "lng": -72.29722075,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "17",
+      "lessee": "Meetinghouse Creek Fisheries Inc.",
+      "status": "Leased",
+      "term": "July 01, 2022 - June 30, 2032",
+      "lat": 40.93175952,
+      "lng": -72.54471979,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "851",
+      "lessee": "Montauk Shellfish Company Inc.",
+      "status": "Leased",
+      "term": "July 1, 2022 - June 30, 2032",
+      "lat": 41.00841183,
+      "lng": -72.08640576,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "T19",
+      "lessee": "Montauk Shellfish Company Inc.",
+      "status": "Pending",
+      "term": "No Executed Lease",
+      "lat": 41.03550372,
+      "lng": -72.25804383,
+      "last_update": "2026-11-20"
+    },
+    {
+      "lease_id": "T22",
+      "lessee": "Montauk Shellfish Company Inc.",
+      "status": "Pending",
+      "term": "No Executed Lease",
+      "lat": 41.03335474,
+      "lng": -72.25471643,
+      "last_update": "2026-11-20"
+    },
+    {
+      "lease_id": "848",
+      "lessee": "Multi Aquaculture Systems Inc.",
+      "status": "Leased",
+      "term": "January 1, 2013 - December 31, 2023",
+      "lat": 41.00703366,
+      "lng": -72.08982808,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "598",
+      "lessee": "North Fork Big Oyster Corp.",
+      "status": "Leased",
+      "term": "January 1, 2024 - December 31, 2033",
+      "lat": 41.01690643,
+      "lng": -72.39608497,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "483",
+      "lessee": "North Fork Big Oyster Corporation",
+      "status": "Leased",
+      "term": "January 1, 2018 - December 31, 2027",
+      "lat": 41.022419,
+      "lng": -72.42432392,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "T24",
+      "lessee": "Olas Oyster Company Inc.",
+      "status": "Pending",
+      "term": "No Executed Lease",
+      "lat": 41.03370299,
+      "lng": -72.25132053,
+      "last_update": "2026-11-20"
+    },
+    {
+      "lease_id": "5",
+      "lessee": "Oyster Bay Shellfish Co. LLC",
+      "status": "Leased",
+      "term": "January 01, 2024 - December 31, 2033",
+      "lat": 40.9289123,
+      "lng": -72.57088054,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "T10",
+      "lessee": "Oysterponds Shellfish LLC",
+      "status": "Leased",
+      "term": "January 1, 2023 - December 31, 2032",
+      "lat": 41.12862215,
+      "lng": -72.32158247,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "T13",
+      "lessee": "Oysterponds Shellfish LLC",
+      "status": "Leased",
+      "term": "January 1, 2026 - December 31, 2035",
+      "lat": 41.13116247,
+      "lng": -72.31957101,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "400",
+      "lessee": "Peconic Gold Oysters Inc.",
+      "status": "Leased",
+      "term": "January 01, 2023 - December 31, 2032",
+      "lat": 40.99213833,
+      "lng": -72.45885828,
+      "last_update": "2026-09-22"
+    },
+    {
+      "lease_id": "406",
+      "lessee": "Peconic Gold Oysters Inc.",
+      "status": "Leased",
+      "term": "January 01, 2023 - December 31, 2032",
+      "lat": 40.98393797,
+      "lng": -72.45881252,
+      "last_update": "2026-09-22"
+    },
+    {
+      "lease_id": "852",
+      "lessee": "Polifarms LLC",
+      "status": "Pending",
+      "term": "No Executed Lease",
+      "lat": 41.00585067,
+      "lng": -72.08647963,
+      "last_update": "2026-05-28"
+    },
+    {
+      "lease_id": "826",
+      "lessee": "Raymond Saar",
+      "status": "Leased",
+      "term": "January 1, 2026 - December 31, 2035",
+      "lat": 41.0359144,
+      "lng": -72.29203383,
+      "last_update": "2026-04-22"
+    },
+    {
+      "lease_id": "411",
+      "lessee": "Robert Goodale",
+      "status": "Leased",
+      "term": "January 01, 2025 - December 31, 2034",
+      "lat": 40.98953947,
+      "lng": -72.45433253,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "530",
+      "lessee": "Roger Cornell",
+      "status": "Leased",
+      "term": "January 01, 2025 - December 31, 2034",
+      "lat": 41.0190778,
+      "lng": -72.41087156,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "405",
+      "lessee": "Sebonac Inlet Oyster Farm LLC",
+      "status": "Leased",
+      "term": "January 1, 2018 - December 31, 2027",
+      "lat": 40.9178576,
+      "lng": -72.46058129,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "645",
+      "lessee": "Shellworks LLC",
+      "status": "Leased",
+      "term": "January 1, 2019 - December 31, 2028",
+      "lat": 40.9809247,
+      "lng": -72.388118,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "583",
+      "lessee": "Southold Bay Oysters LLC",
+      "status": "Leased",
+      "term": "January 01, 2025 - December 31, 2034",
+      "lat": 41.06209333,
+      "lng": -72.39669928,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "T2",
+      "lessee": "Spinelli's Sea Farm LLC",
+      "status": "Leased",
+      "term": "January 1, 2023 - December 31, 2032",
+      "lat": 40.94082376,
+      "lng": -72.55653809,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "426",
+      "lessee": "Tardif Aquaculture LLC",
+      "status": "Pending",
+      "term": "No Executed Lease",
+      "lat": 41.02264816,
+      "lng": -72.44123399,
+      "last_update": "2026-05-29"
+    },
+    {
+      "lease_id": "438",
+      "lessee": "Tardif Aquaculture LLC",
+      "status": "Leased",
+      "term": "January 1, 2025 - December 31, 2034",
+      "lat": 41.02004117,
+      "lng": -72.43791229,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "500",
+      "lessee": "Thomas Cornell",
+      "status": "Leased",
+      "term": "January 01, 2025 - December 31, 2034",
+      "lat": 41.01725018,
+      "lng": -72.42106386,
+      "last_update": "2025-12-18"
+    },
+    {
+      "lease_id": "102",
+      "lessee": "Weird Fishes Shellfish Co. LLC",
+      "status": "Pending",
+      "term": "No Executed Lease",
+      "lat": 40.97743476,
+      "lng": -72.5099111,
+      "last_update": "2026-09-28"
+    },
+    {
+      "lease_id": "9",
+      "lessee": "William Painter",
+      "status": "Leased",
+      "term": "January 01, 2025 - December 31, 2034",
+      "lat": 40.94293967,
+      "lng": -72.55985747,
+      "last_update": "2025-12-18"
+    }
+  ]
+}

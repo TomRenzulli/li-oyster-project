@@ -72,3 +72,31 @@ After any CSP change, build and confirm no inline `<style>` or inline `<script>`
 ```bash
 npm run build && grep -nE '<style>|<script>(?!.*src=)' -r dist || echo "clean"
 ```
+
+## Research and data workflow (Phase 2)
+
+```bash
+npm run research      # pull the county lease snapshot + rebuild the research queue
+npm run data:export   # listings  -> data/farms.csv   (review in a spreadsheet)
+npm run data:import   # data/farms.csv -> listings    (dry run; add -- --write)
+npm run verify:data   # source + date + geo-precision gate
+npm run verify:stale  # listings due for re-verification
+npm run check:links   # internal link check against dist/ (run after a build)
+```
+
+The CSV round-trip is a verified fixed point: export → import → export produces an identical
+file. `leases` and `merged_into` are YAML-only, since they are structured records rather than
+things to edit in a cell; the importer preserves them.
+
+**Step 3 of the pipeline — deciding whether a lessee is a public business — is deliberately
+manual.** See [`data/RESEARCH_METHOD.md`](../data/RESEARCH_METHOD.md). Automating that
+judgement is how a directory ends up confidently wrong.
+
+## Adding a listing, in practice
+
+1. Read the business's own site. Record every URL and the date you read it.
+2. Write only what the source states. Everything else is omitted — an absent field renders as
+   "Not listed", which is not the same as "no".
+3. Put the open questions in `data/NEEDS_VERIFICATION.md`, next to the listing's name.
+4. `npm run verify:data && npx astro check` — the invariants are enforced twice, by
+   `verify-data.mjs` and by the Zod schema, on purpose.

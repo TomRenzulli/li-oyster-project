@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getListedFarms, slugify } from '../../lib/farms';
+import { REGIONS } from '../../lib/regions';
+
+const farms = await getListedFarms();
+const counts = new Map(REGIONS.map((r) => [r, farms.filter((f) => f.data.region === r).length]));
+---
+
+<BaseLayout
+  title="Long Island oyster regions"
+  description="Oyster farms by Long Island region: South Shore, North Shore, North Fork, South Fork, Peconic and Western Long Island."
+>
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Regions</span>
+  </nav>
+  <h1 class="font-display mt-2 text-4xl">Regions</h1>
+  <p class="mt-4 max-w-prose text-lg">
+    Long Island’s oyster grounds divide along its coasts and its two forks. Each region has its own
+    water, its own leasing arrangements and its own flavour.
+  </p>
+  <ul class="mt-8 grid list-none gap-3 sm:grid-cols-2">
+    {REGIONS.map((r) => (
+      <li>
+        <a
+          href={`/regions/${slugify(r)}/`}
+          class="border-navy-200 bg-salt-50 hover:border-brass-400 block rounded border px-4 py-3 no-underline"
+        >
+          <span class="font-display text-navy-900 text-lg">{r}</span>
+          <span class="text-shell-600 block text-sm">
+            {counts.get(r)} verified listing{counts.get(r) === 1 ? '' : 's'}
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>

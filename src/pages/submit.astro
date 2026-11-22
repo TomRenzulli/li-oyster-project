@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SubmissionForm from '../components/SubmissionForm.astro';
+---
+
+<BaseLayout
+  title="Add or update a listing"
+  description="Tell us about a Long Island oyster farm, hatchery or grower that is missing from the directory, or send us a correction."
+>
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Add a listing</span>
+  </nav>
+
+  <h1 class="font-display mt-2 text-4xl">Add or update a listing</h1>
+
+  <p class="mt-4 max-w-prose text-lg">
+    If a Long Island oyster operation is missing from this directory, tell us. A person reads every
+    submission.
+  </p>
+
+  <div class="border-navy-200 bg-salt-50 mt-6 max-w-prose rounded border p-4">
+    <h2 class="text-lg">What happens to this</h2>
+    <ul class="mt-2 list-disc space-y-1.5 pl-5">
+      <li>
+        <strong>Nothing publishes automatically.</strong> This becomes a task for a human.
+      </li>
+      <li>
+        We verify against public sources before listing anything, so a link to the business’s own
+        page is the most useful thing you can give us.
+      </li>
+      <li>
+        We will not publish a personal name, a home address, or anything else a business has not
+        published about itself. See our <a href="/methodology/">methodology</a>.
+      </li>
+      <li>Your email is used only to follow up. It is not published or added to a list.</li>
+    </ul>
+  </div>
+
+  <SubmissionForm kind="submit" />
+</BaseLayout>

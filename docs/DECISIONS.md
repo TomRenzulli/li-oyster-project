@@ -35,9 +35,107 @@ Format: date — decision — why — who decided.
   comments in `public/_headers` but not granted. — engineering
 - **Pages project uses direct upload, not Cloudflare's Git integration.** A Git-connected
   Pages project builds and deploys on push, bypassing every CI gate. — engineering
+  **Superseded 2026-11-22**, see below.
 - **Actions pinned to commit SHAs**, resolved from the GitHub API rather than written from
   memory, with the tag in a trailing comment and Dependabot bumping both. — engineering
 - **`verify-data.mjs` is dependency-free and independent of the Zod schema.** The schema can
   be weakened in the same PR as the data it guards; a second check cannot be. — engineering
 - **Trivy `ignore-unfixed: true`.** Unpatchable HIGHs are not actionable in a PR and a gate
   people bypass is worse than no gate. They surface in logs for the monthly pass. — engineering
+
+## 2026-11-21 (Phase 2)
+
+- **Lease data comes from the county's ArcGIS feature service, not the PDF.** Same authority
+  and the same inventory, but structured and re-runnable, so a later snapshot can be diffed.
+  The PDF's text layer is positional and lossy. — engineering
+- **A lease is not a business, and lease individuals are never republished.** 8 of 33 lessees
+  are personal names; they are counted in the research queue and excluded from it by policy.
+  — engineering, per RESEARCH_METHOD.md
+- **Directory filtering is client-side over server-rendered cards, not Pagefind.** The full
+  list works with JavaScript off, filtering is instant with no network round-trip, and there
+  is no index to drift out of sync with the content. At tens-to-hundreds of farms this is both
+  faster and simpler. Pagefind still runs in the build and indexes the site, ready to power
+  full-text search over the Phase 3 guides. — engineering
+- **`geo` is published only with `geo_precision`,** enforced by both the Zod schema and
+  `verify-data.mjs`. A lease centroid is a point of open water and is never used as a business
+  location. Consequence: `/map/` currently has no pins and says so plainly. — engineering
+- **`style-src-attr 'unsafe-inline'` added for Leaflet**, which positions tiles by writing
+  `style="transform:…"` onto elements. This keeps the far more dangerous `style-src` on
+  `'self'`, so injected `<style>` blocks stay blocked. Drops out if the map ever does.
+  — engineering
+- **`vite.build.assetsInlineLimit: 0`.** Astro inlines small island scripts as
+  `<script type="module">…</script>`, which `script-src 'self'` blocks. This was caught by
+  inspecting the real build output, not assumed. Forcing external files keeps one strict CSP
+  in `_headers` instead of per-build hashes. A CI step now asserts no inline script or style
+  ever reappears. — engineering
+- **`data:` dropped from img-src** — nothing we serve uses a data URI now that nothing is
+  inlined. Must be revisited if the Pagefind UI bundle is ever adopted, as its CSS uses them.
+  — engineering
+- **Nav links only to pages that exist.** `/guides/` and `/shop/` links arrive with Phases 3
+  and 4. A new CI step (`check:links`) fails the build on any internal link to a missing page.
+  — engineering
+- **`zod` added as a direct dependency.** Astro 7 deprecates the `z` re-export from
+  `astro:content`; importing from `zod` directly clears the warnings and npm dedupes it to the
+  single copy Astro already ships (4.6.7). — engineering
+- **OG images via Satori + resvg, font from `@fontsource/eb-garamond`.** The font is an
+  auditable npm dependency under the SIL OFL rather than a binary committed to the repo or a
+  build-time download. Generated at build time, so they are plain files on the CDN.
+  — engineering
+- **Known moderate advisory accepted:** `satori` depends on `fflate` 0.7.x
+  (GHSA-px8p-9vwx-vf98, infinite loop on malformed ZIP64). Below the `--audit-level=high`
+  gate, and the code path never runs: Satori is build-time only and parses our own font and
+  content, never user input. Revisit when Satori ships a patched fflate. — engineering
+
+## 2026-11-22 (repo hardening)
+
+- **TruffleHog scanner image pinned to `3.100.0`.** The action SHA pinned only the wrapper;
+  the wrapper's default pulls `trufflehog:latest` on every run, which is the same
+  supply-chain hole SHA pinning exists to close. Note the ghcr tag has no `v` prefix. Found
+  because the job was failing: the action also passes `--fail` itself, so repeating it in
+  `extra_args` is a hard error. — engineering
+- **Branch protection applied to `main` and `develop` with admin bypass.** PR required, four
+  CI checks required, linear history, no force-push or deletion. Admin bypass is the
+  deliberate trade for a solo operator — gates catch ordinary mistakes without locking the
+  owner out during an incident. — owner
+- **Issue labels created** for the submission pipeline: `submission`, `new-listing`,
+  `correction`, `removal-request`, `priority`, `needs-verification`. The Pages Function files
+  against these. — engineering
+
+## 2026-11-22 (deploy architecture)
+
+- **Cloudflare Pages deploys via Git integration; Actions no longer deploys.** Supersedes the
+  Phase 1 direct-upload decision. Removed the `deploy-staging` and `deploy-production` jobs
+  and `wrangler-action` from `ci-cd.yml`, and with them the `CLOUDFLARE_API_TOKEN` and
+  `CLOUDFLARE_ACCOUNT_ID` repository secrets. GitHub Actions now holds **no** credentials at
+  all, so there is no deploy token to scope, rotate, or have read out of a runner by a
+  compromised transitive dependency during `npm ci`. — owner's decision, 2026-11-22
+- **Accepted cost: Cloudflare builds on push, not on green.** It does not read GitHub check
+  status, so the CI gate is no longer a hard precondition of a deploy. Mitigation: `main` and
+  `develop` are protected and require a PR with all four checks passing, so the gate moves
+  from the deploy boundary to the merge boundary, and the only way to deploy unchecked code is
+  a deliberate admin-bypass direct push. Documented plainly in `docs/DEPLOY.md` rather than
+  left as a surprise. — engineering
+- **Lighthouse gate audits a local `astro preview`; a separate daily workflow audits
+  production.** The first attempt triggered Lighthouse on `deployment_status`, assuming
+  Cloudflare reports deployments to GitHub. **It does not** — Pages' and Workers' native Git
+  integrations create _check runs and PR comments only_, no GitHub Deployment object, so the
+  event never fires. Verified 2026-11-22: the repo's `/deployments` API is empty despite
+  completed Cloudflare builds. Scraping the preview URL out of a check run's prose summary was
+  the alternative and is too fragile to gate a release on. So the gate audits `dist/` served
+  locally and therefore blocks every PR, and `lighthouse-production.yml` measures the real CDN
+  daily. A gate that runs and measures slightly less beats a faithful one that never
+  fires. — engineering
+- **The preview server is started in its own CI step, not via Lighthouse CI's
+  `startServerCommand`.** `astro preview` in Astro 7 daemonizes — the foreground process exits
+  as soon as it prints the pid — so Lighthouse CI would see its child die and fail while the
+  server was actually up. Confirmed locally. — engineering
+- **Cloudflare project must be Pages, not a Worker.** The repo was initially connected to a
+  Worker (`longislandoysterfarm`), whose builds failed. Workers Builds has no `functions/`
+  file-based routing, so the Phase 2 `functions/api/submit.ts` would never have been served.
+  Staying on Workers would have meant a `wrangler.jsonc` with `assets.directory`, an
+  `.assetsignore`, and rewriting the Function as a Worker entrypoint with hand-rolled routing.
+  Pages keeps `_headers`, `_redirects` and the Function working unchanged. — owner's decision,
+  2026-11-22
+- **No break-glass `wrangler pages deploy` in the runbook.** Documenting it would require
+  minting a Pages:Edit token during an incident, which is when scope discipline is weakest.
+  Dashboard rollback plus fix-forward covers the realistic failures. — engineering

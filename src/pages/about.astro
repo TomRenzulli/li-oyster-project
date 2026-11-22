@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="About"
+  description="Who runs longislandoysterfarm.com, why it exists, and how to get in touch about a listing."
+>
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>About</span>
+  </nav>
+
+  <h1 class="font-display mt-2 text-4xl">About this site</h1>
+
+  <p class="mt-5 max-w-prose text-lg">
+    longislandoysterfarm.com is an independent index of Long Island’s oyster hatcheries, farms and
+    growers — who they are, which water they work, and what they call their oysters.
+  </p>
+
+  <h2 class="mt-10 text-2xl">Why it exists</h2>
+  <p class="mt-3 max-w-prose">
+    Long Island grows a great deal of oysters and has no public, current, source-cited index of who
+    grows them. The county publishes lease records, but a lease is a property document, not a
+    business listing, and it covers only part of the island. The growers’ association keeps a farm
+    map for its members behind a login. Everything else is scattered across press articles,
+    marketplace pages and social accounts of varying age.
+  </p>
+  <p class="mt-3 max-w-prose">
+    So the useful thing to build is not another list. It is a list you can check: every entry
+    carries its sources and the date someone last looked at them.
+  </p>
+
+  <h2 class="mt-10 text-2xl">How it is built</h2>
+  <p class="mt-3 max-w-prose">
+    From public records and from what businesses publish about themselves — never from inference,
+    and never from a personal detail a business has not made public itself. The
+    <a href="/methodology/">methodology page</a> sets out the rules in full, including what this
+    site refuses to publish and where its coverage is currently thin.
+  </p>
+
+  <h2 class="mt-10 text-2xl">Corrections and removals</h2>
+  <p class="mt-3 max-w-prose">
+    If you run a farm listed here, you can <a href="/claim/">correct or remove your listing</a>.
+    Removals are honoured without argument and without asking you to prove ownership. If a farm is
+    missing, <a href="/submit/">tell us</a>.
+  </p>
+
+  <h2 class="mt-10 text-2xl">Independence</h2>
+  <p class="mt-3 max-w-prose">
+    No farm pays to be listed, and no listing can be bought, improved or removed with money. The
+    site will carry a small shop, and where a product earns a commission that will be disclosed on
+    the page it appears on. Listings are not for sale at any price.
+  </p>
+</BaseLayout>

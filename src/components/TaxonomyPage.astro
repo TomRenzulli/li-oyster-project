@@ -1,0 +1,77 @@
+---
+import FarmCard from './FarmCard.astro';
+import JsonLd from './JsonLd.astro';
+import { toIndexRow, type Farm } from '../lib/farms';
+
+interface Props {
+  kind: 'region' | 'waterbody' | 'town';
+  value: string;
+  farms: Farm[];
+  intro: string;
+  parentLabel: string;
+  parentHref: string;
+}
+const { kind, value, farms, intro, parentLabel, parentHref } = Astro.props;
+const rows = farms.map(toIndexRow);
+const site = Astro.site?.href ?? 'https://longislandoysterfarm.com/';
+
+const schema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `Oyster farms — ${value}`,
+    numberOfItems: rows.length,
+    itemListElement: rows.map((r, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: new URL(r.url, site).href,
+      name: r.name,
+    })),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: site },
+      { '@type': 'ListItem', position: 2, name: parentLabel, item: new URL(parentHref, site).href },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: value,
+        item: new URL(Astro.url.pathname, site).href,
+      },
+    ],
+  },
+];
+---
+
+<JsonLd schema={schema} />
+
+<nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+  <a href="/">Home</a> <span aria-hidden="true">/</span>
+  <a href={parentHref}>{parentLabel}</a> <span aria-hidden="true">/</span>
+  <span>{value}</span>
+</nav>
+
+<h1 class="font-display mt-2 text-4xl">
+  {kind === 'town' ? `Oyster farms in the Town of ${value}` : `Oyster farms — ${value}`}
+</h1>
+
+<p class="mt-5 max-w-prose text-lg">{intro}</p>
+
+<p class="text-shell-600 mt-6 text-sm">
+  {rows.length} verified listing{rows.length === 1 ? '' : 's'}
+</p>
+
+<ul class="mt-4 grid list-none gap-4 sm:grid-cols-2">
+  {rows.map((farm) => (
+    <li>
+      <FarmCard farm={farm} />
+    </li>
+  ))}
+</ul>
+
+<p class="border-navy-200 bg-salt-50 mt-10 rounded border p-4">
+  Know a farm here that is not listed? <a href="/submit/">Add it</a> — a person reads every
+  submission, and nothing publishes without a source.
+</p>
