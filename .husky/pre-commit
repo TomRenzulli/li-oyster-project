@@ -1,0 +1,5 @@
+# Block the commit on lint, format, and known-vulnerable dependencies.
+# verify:data runs too — a listing without a source must never reach a branch.
+npx --no-install lint-staged
+npm run verify:data
+npm audit --audit-level=high

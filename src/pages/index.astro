@@ -1,0 +1,63 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+// Phase 1 is scaffold only. Nothing here asserts a fact about any farm:
+// the directory, counts and map arrive in Phase 2 from verified data.
+const regions = [
+  'South Shore',
+  'North Shore',
+  'North Fork',
+  'South Fork',
+  'Peconic',
+  'Western LI',
+] as const;
+---
+
+<BaseLayout
+  title="Long Island Oyster Farm — the index of LI oyster farms, hatcheries and growers"
+  description="An independent, source-cited directory of Long Island oyster hatcheries, farms and growers, the waterbodies they work and the oysters they sell."
+>
+  <h1 class="text-display font-display leading-[1.05]">
+    Every Long Island oyster farm,
+    <br />
+    <span class="text-navy-500">in one honest index.</span>
+  </h1>
+
+  <p class="mt-6 max-w-prose text-lg">
+    Hatcheries, farms, nurseries and growers from the Great South Bay to the Peconics. Each listing
+    cites its sources and shows when it was last verified. Nothing here is guessed.
+  </p>
+
+  <section class="mt-12" aria-labelledby="regions-heading">
+    <h2 id="regions-heading" class="text-2xl">
+      Browse by region
+    </h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {regions.map((region) => (
+        <li>
+          <a
+            href={`/regions/${region.toLowerCase().replaceAll(' ', '-')}/`}
+            class="border-navy-200 bg-salt-50 hover:border-brass-400 block rounded border px-4 py-3 no-underline"
+          >
+            <span class="font-display text-navy-900 text-lg">{region}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section
+    class="border-navy-200 bg-salt-50 mt-12 rounded border p-5"
+    aria-labelledby="build-heading"
+  >
+    <h2 id="build-heading" class="text-xl">
+      This site is being built in the open
+    </h2>
+    <p class="mt-2 max-w-prose">
+      The directory is under construction and no listings are published yet. Research runs only from
+      public records and the farms' own published information. If you run a Long Island oyster
+      operation and want to be listed, or want a listing corrected or removed, the
+      <a href="/submit/">submission form</a> reaches a person, not a robot.
+    </p>
+  </section>
+</BaseLayout>

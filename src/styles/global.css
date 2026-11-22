@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+
+/* Brand: South Shore working waterfront.
+   Weathered navy, salt white, brass + rope accents, wet-shell greys.
+   Fonts are system stacks on purpose: no third-party font host means no extra
+   CSP origin, no FOUT and no request outside Cloudflare. Swap in self-hosted
+   woff2 later if we commission a display face. */
+@theme {
+  --color-navy-50: #f2f5f8;
+  --color-navy-100: #dde5ed;
+  --color-navy-200: #b6c6d6;
+  --color-navy-300: #8aa2b9;
+  --color-navy-400: #5b7694;
+  --color-navy-500: #3c5873;
+  --color-navy-600: #2b4259;
+  --color-navy-700: #1f3144;
+  --color-navy-800: #16232f;
+  --color-navy-900: #0e161e;
+
+  --color-salt-50: #fdfdfb;
+  --color-salt-100: #f7f6f1;
+  --color-salt-200: #ecebe3;
+  --color-salt-300: #dcd9cc;
+
+  --color-brass-300: #d9b870;
+  --color-brass-400: #c79f4b;
+  --color-brass-500: #a8822f;
+  --color-brass-600: #866523;
+
+  --color-rope-300: #cbb08a;
+  --color-rope-500: #9c7d54;
+
+  --color-shell-400: #8d9499;
+  --color-shell-600: #5d666c;
+
+  --font-display:
+    'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman',
+    serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --text-display: clamp(2rem, 6vw, 3.75rem);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply bg-salt-100 text-navy-800 font-sans antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display text-navy-900 tracking-tight;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* WCAG 2.2 AA: a visible, non-reliant-on-color focus ring everywhere. */
+  :focus-visible {
+    @apply outline-brass-500 outline-3 outline-offset-2;
+  }
+
+  a {
+    @apply underline decoration-brass-400 decoration-2 underline-offset-4;
+  }
+  a:hover {
+    @apply decoration-navy-600;
+  }
+}
+
+@utility skip-link {
+  @apply bg-navy-800 text-salt-50 absolute left-4 z-50 -translate-y-20 rounded-b px-4 py-2 no-underline transition-transform focus:translate-y-0;
+}

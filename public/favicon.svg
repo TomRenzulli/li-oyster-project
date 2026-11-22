@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Oyster shell">
+  <rect width="32" height="32" rx="6" fill="#16232f"/>
+  <path d="M16 6c6 0 10 4.6 10 10.4C26 21.6 21.6 26 16 26S6 21.6 6 16.4C6 10.6 10 6 16 6z" fill="#dcd9cc"/>
+  <path d="M16 8.5c-3.6 2.4-5.4 5.2-5.4 8.2 0 2.6 1.6 4.8 4 5.9" stroke="#9c7d54" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 8.5c3.6 2.4 5.4 5.2 5.4 8.2 0 2.6-1.6 4.8-4 5.9" stroke="#9c7d54" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <circle cx="16" cy="17" r="2.4" fill="#c79f4b"/>
+</svg>
