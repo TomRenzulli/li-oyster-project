@@ -1,29 +1,53 @@
 # Deploy
 
-Hosting is Cloudflare Pages, deployed by GitHub Actions via `wrangler-action`. The Pages
-project is **not** connected to the repo through Cloudflare's own Git integration — if it
-were, Cloudflare would build and deploy on every push and bypass the entire CI gate. The
-pipeline builds, the pipeline deploys.
+Hosting is Cloudflare Pages, connected to this GitHub repo through **Cloudflare's own Git
+integration**. Cloudflare watches the repo, builds it, and serves it:
 
-Project name used by the workflow: **`li-oyster-project`** (`CF_PROJECT_NAME` in
-`ci-cd.yml`). If you rename it in Cloudflare, change it there too.
+| Branch      | Cloudflare deployment | URL                           |
+| ----------- | --------------------- | ----------------------------- |
+| `main`      | Production            | `longislandoysterfarm.com`    |
+| `develop`   | Preview (= staging)   | `develop.<project>.pages.dev` |
+| `feature/*` | Preview               | per-deployment `*.pages.dev`  |
+
+GitHub Actions does **not** deploy and holds no Cloudflare credential. It runs the checks
+(`ci-cd.yml`) and, after Cloudflare reports a deployment, the Lighthouse audit
+(`lighthouse.yml`). See [CI-CD-ARCHITECTURE.md](CI-CD-ARCHITECTURE.md).
+
+**The trade to know about:** Cloudflare builds on _push_, not on _green_. It does not read
+GitHub check status, so a push to `develop` that fails CI is still built and served at the
+preview URL. The gates are enforced at the merge boundary by branch protection instead — which
+is why `main` and `develop` are protected, require a PR, and are never pushed to directly.
 
 ## One-time setup
 
-### 1. Create the Pages project
+### 1. Connect the Pages project to the repo
 
-Cloudflare dashboard → **Workers & Pages → Create → Pages → Use direct upload**. Name it
-`li-oyster-project`. Direct upload is the right choice precisely because it has no Git
-connection.
+Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git** → authorise the
+Cloudflare GitHub App on `TomRenzulli/li-oyster-project` **only** (not "all repositories") →
+select the repo.
 
-Alternatively, let the first workflow run create it: `wrangler pages deploy` creates a missing
-project non-interactively in recent Wrangler versions. Creating it in the dashboard first is
-more predictable.
+Build settings:
 
-### 2. Add the GitHub secrets
+| Setting          | Value                     |
+| ---------------- | ------------------------- |
+| Framework preset | Astro                     |
+| Build command    | `npm ci && npm run build` |
+| Build output     | `dist`                    |
+| Root directory   | _(blank — repo root)_     |
+| `NODE_VERSION`   | `24`                      |
 
-`CLOUDFLARE_API_TOKEN` (scoped Pages:Edit, this account only) and `CLOUDFLARE_ACCOUNT_ID`.
-Exact steps in [GITHUB_SECRETS.md](GITHUB_SECRETS.md).
+`npm ci` rather than `npm install`: it installs exactly the committed lockfile and fails if
+`package.json` and `package-lock.json` disagree, which is the whole reason the lockfile is
+committed.
+
+Set `NODE_VERSION` as a build environment variable for **both** Production and Preview.
+Cloudflare's default Node is older than what this project's Astro version needs.
+
+### 2. GitHub secrets
+
+None needed — that is the point of Git integration. If `CLOUDFLARE_API_TOKEN` or
+`CLOUDFLARE_ACCOUNT_ID` are still set from the earlier Actions-deploy design, delete both and
+revoke the token in Cloudflare. See [GITHUB_SECRETS.md](GITHUB_SECRETS.md).
 
 ### 3. Set the production branch
 
@@ -110,11 +134,8 @@ Pages project → **Deployments** → pick the last good one → **Rollback**. I
 Then fix forward in git — a rollback is not a commit, so the next deploy will reintroduce the
 problem if you leave the branch alone.
 
-Break-glass manual deploy, if Actions itself is down:
-
-```bash
-npm ci && npm run build
-npx wrangler pages deploy dist --project-name=li-oyster-project --branch=main
-```
-
-This skips every gate, so treat it as an incident action and re-run the pipeline afterwards.
+Break-glass: **Retry deployment** on the failed deployment in the Cloudflare dashboard, or
+push an empty commit to `main`. A manual `wrangler pages deploy` is deliberately _not_
+documented as the escape hatch — it would need a Pages:Edit token, and creating one for an
+incident reintroduces exactly the credential this architecture removed. Rollback plus fix
+forward covers the realistic failures.

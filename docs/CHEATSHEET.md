@@ -45,11 +45,8 @@ curl -sI https://www.longislandoysterfarm.com/ | head -3
 npm run build && grep -rn '<style>' dist || echo clean
 ```
 
-## Deploy by hand (break glass)
+## Deploys
 
-```bash
-npm ci && npm run build
-npx wrangler pages deploy dist --project-name=li-oyster-project --branch=main
-```
-
-Needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in your shell. Prefer the pipeline.
+Cloudflare Pages builds from git on its own (`main` → production, `develop` → staging
+preview). There is no deploy command and no deploy token. To roll back: Cloudflare dashboard →
+the project → **Deployments** → last good one → **Rollback**, then fix forward in git.

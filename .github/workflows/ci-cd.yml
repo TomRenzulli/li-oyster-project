@@ -1,6 +1,9 @@
 name: ci-cd
 
-# Gates on every PR; deploys develop -> staging and main -> production.
+# Checks only. Deployment is Cloudflare Pages' own Git integration: it builds
+# from this repo directly (main -> production, develop -> staging preview), so
+# no deploy credential ever enters GitHub Actions. Lighthouse runs separately,
+# in lighthouse.yml, triggered by the deployment Cloudflare reports back.
 # All third-party actions are pinned to a commit SHA, with the human-readable
 # tag in the trailing comment. Dependabot bumps both together.
 
@@ -21,7 +24,6 @@ concurrency:
 
 env:
   NODE_VERSION: '24'
-  CF_PROJECT_NAME: li-oyster-project
 
 jobs:
   secrets:
@@ -132,75 +134,3 @@ jobs:
 
       - name: Check internal links
         run: npm run check:links
-
-  deploy-staging:
-    name: Deploy staging
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-    environment:
-      name: staging
-      url: ${{ steps.deploy.outputs.deployment-url }}
-    outputs:
-      url: ${{ steps.deploy.outputs.deployment-url }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - name: Deploy to Cloudflare Pages (staging branch)
-        id: deploy
-        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=${{ env.CF_PROJECT_NAME }} --branch=develop
-
-  lighthouse:
-    name: Lighthouse CI (95 floor)
-    runs-on: ubuntu-latest
-    needs: [deploy-staging]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Audit the staging deployment
-        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
-        with:
-          urls: |
-            ${{ needs.deploy-staging.outputs.url }}/
-            ${{ needs.deploy-staging.outputs.url }}/farms/
-          configPath: ./lighthouserc.json
-          uploadArtifacts: true
-          temporaryPublicStorage: true
-
-  deploy-production:
-    name: Deploy production
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment:
-      name: production
-      url: https://longislandoysterfarm.com
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - name: Deploy to Cloudflare Pages (production)
-        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=${{ env.CF_PROJECT_NAME }} --branch=main

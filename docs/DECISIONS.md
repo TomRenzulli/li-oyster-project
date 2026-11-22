@@ -35,6 +35,7 @@ Format: date — decision — why — who decided.
   comments in `public/_headers` but not granted. — engineering
 - **Pages project uses direct upload, not Cloudflare's Git integration.** A Git-connected
   Pages project builds and deploys on push, bypassing every CI gate. — engineering
+  **Superseded 2026-11-22**, see below.
 - **Actions pinned to commit SHAs**, resolved from the GitHub API rather than written from
   memory, with the tag in a trailing comment and Dependabot bumping both. — engineering
 - **`verify-data.mjs` is dependency-free and independent of the Zod schema.** The schema can
@@ -99,3 +100,27 @@ Format: date — decision — why — who decided.
 - **Issue labels created** for the submission pipeline: `submission`, `new-listing`,
   `correction`, `removal-request`, `priority`, `needs-verification`. The Pages Function files
   against these. — engineering
+
+## 2026-11-22 (deploy architecture)
+
+- **Cloudflare Pages deploys via Git integration; Actions no longer deploys.** Supersedes the
+  Phase 1 direct-upload decision. Removed the `deploy-staging` and `deploy-production` jobs
+  and `wrangler-action` from `ci-cd.yml`, and with them the `CLOUDFLARE_API_TOKEN` and
+  `CLOUDFLARE_ACCOUNT_ID` repository secrets. GitHub Actions now holds **no** credentials at
+  all, so there is no deploy token to scope, rotate, or have read out of a runner by a
+  compromised transitive dependency during `npm ci`. — owner's decision, 2026-11-22
+- **Accepted cost: Cloudflare builds on push, not on green.** It does not read GitHub check
+  status, so the CI gate is no longer a hard precondition of a deploy. Mitigation: `main` and
+  `develop` are protected and require a PR with all four checks passing, so the gate moves
+  from the deploy boundary to the merge boundary, and the only way to deploy unchecked code is
+  a deliberate admin-bypass direct push. Documented plainly in `docs/DEPLOY.md` rather than
+  left as a surprise. — engineering
+- **Lighthouse moved to its own workflow, triggered by `deployment_status`.** With Git
+  integration, Actions cannot know when Cloudflare finished or what per-deployment preview
+  hostname it used; Cloudflare reports both back as a GitHub deployment status carrying
+  `environment_url`. The job allowlists that URL to `*.pages.dev` or the production apex,
+  because `environment_url` is settable by anyone who can create a deployment and an audit
+  must not be pointable at an arbitrary host. — engineering
+- **No break-glass `wrangler pages deploy` in the runbook.** Documenting it would require
+  minting a Pages:Edit token during an incident, which is when scope discipline is weakest.
+  Dashboard rollback plus fix-forward covers the realistic failures. — engineering
