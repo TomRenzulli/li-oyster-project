@@ -177,3 +177,14 @@ Format: date — decision — why — who decided.
   `reference('guides')` cannot be declared inside the same schema object, so the slugs are
   unchecked by Zod. `assertGuideRelations()` runs on the index page and throws, which fails
   the build before the link checker would have to catch it after a full render. — engineering
+
+## 2026-11-22 (Node version pinning)
+
+- **`.node-version` is the single source of truth for the Node version.** Cloudflare Pages
+  reads `.node-version`, and `ci-cd.yml` now reads the same file through
+  `actions/setup-node`'s `node-version-file` instead of a hardcoded workflow env var. The
+  previous setup had the version written in two places that nothing forced to agree — a
+  workflow env of `24` and a dashboard setting a human had to remember.
+  **Pages does not read `package.json` → `engines`**, so that field cannot serve this purpose
+  and is advisory only. Pinned to `24.22.3` (current Node 24 LTS, "Krypton"); Astro itself
+  requires `>=22.23.4`, so this is comfortably inside support. — engineering
