@@ -47,8 +47,11 @@ commits. Every gate in [`docs/CI-CD-ARCHITECTURE.md`](docs/CI-CD-ARCHITECTURE.md
 
 ## Status
 
-Phase 1 (scaffold + CI/CD) complete. Phase 2 (the directory) is next. No listings are
-published yet.
+Phases 1 (scaffold + CI/CD) and 2 (the directory) complete. Phase 3 is the content hub.
+
+2 verified listings are published. The research queue holds 23 business-entity leads from the
+Suffolk County lease data, and the biggest known gap is the entire South Shore — see
+[`data/NEEDS_VERIFICATION.md`](data/NEEDS_VERIFICATION.md).
 
 ## Docs
 

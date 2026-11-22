@@ -1,0 +1,47 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TaxonomyPage from '../../components/TaxonomyPage.astro';
+import { getListedFarms, slugify, facetCounts } from '../../lib/farms';
+
+export const getStaticPaths = (async () => {
+  const farms = await getListedFarms();
+  return facetCounts(farms, (f) => f.data.waterbody).map(({ value }) => ({
+    params: { waterbody: slugify(value) },
+    props: { waterbody: value, farms: farms.filter((f) => f.data.waterbody === value) },
+  }));
+}) satisfies GetStaticPaths;
+
+const { waterbody, farms } = Astro.props;
+
+/**
+ * Generated from the listings themselves, so the page cannot assert anything
+ * the directory does not already hold a source for.
+ */
+const regions = [...new Set(farms.map((f) => f.data.region).filter(Boolean))];
+const towns = [...new Set(farms.map((f) => f.data.town).filter(Boolean))];
+const brands = [...new Set(farms.flatMap((f) => f.data.oyster_brands.map((b) => b.name)))];
+
+const intro = [
+  `${waterbody} supports ${farms.length} verified oyster operation${farms.length === 1 ? '' : 's'} in this directory`,
+  regions.length ? ` across the ${regions.join(' and ')}` : '',
+  towns.length ? `, in the Town${towns.length === 1 ? '' : 's'} of ${towns.join(' and ')}` : '',
+  '. ',
+  brands.length ? `Oysters marketed from this water include ${brands.join(', ')}. ` : '',
+  'Where a farm works more than one bay, it appears under each.',
+].join('');
+---
+
+<BaseLayout
+  title={`Oyster farms — ${waterbody}`}
+  description={`Verified oyster farms and growers working ${waterbody} on Long Island, with a cited source for every listing.`}
+>
+  <TaxonomyPage
+    kind="waterbody"
+    value={waterbody}
+    farms={farms}
+    intro={intro}
+    parentLabel="Waterbodies"
+    parentHref="/waterbodies/"
+  />
+</BaseLayout>

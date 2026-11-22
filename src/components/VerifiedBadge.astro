@@ -1,0 +1,29 @@
+---
+import { daysSinceVerified, isStale } from '../lib/farms';
+
+interface Props {
+  date: string;
+  compact?: boolean;
+}
+const { date, compact = false } = Astro.props;
+const stale = isStale(date);
+const days = daysSinceVerified(date);
+const human = new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<p
+  class:list={[
+    'inline-flex flex-wrap items-baseline gap-x-2 rounded border px-2.5 py-1',
+    compact ? 'text-xs' : 'text-sm',
+    stale ? 'border-brass-400 bg-brass-300/20' : 'border-navy-200 bg-salt-50',
+  ]}
+>
+  <span class="font-semibold">Last verified</span>
+  <time datetime={date}>{human}</time>
+  {stale && <span class="text-navy-600">— {days} days ago, due for a re-check</span>}
+</p>

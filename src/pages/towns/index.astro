@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getListedFarms, facetCounts } from '../../lib/farms';
+
+const farms = await getListedFarms();
+const towns = facetCounts(farms, (f) => f.data.town);
+---
+
+<BaseLayout
+  title="Long Island oyster farms by town"
+  description="Oyster farms, hatcheries and growers by Long Island town, from Islip and Brookhaven to Southold, Southampton and East Hampton."
+>
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Towns</span>
+  </nav>
+  <h1 class="font-display mt-2 text-4xl">Towns</h1>
+  <p class="mt-4 max-w-prose text-lg">
+    Towns matter here for a practical reason: on the South Shore it is the town, not the county,
+    that leases bay bottom to growers. A town appears below only when a listing’s own source places
+    it there.
+  </p>
+  {towns.length === 0 && (
+    <p class="border-navy-200 bg-salt-50 mt-8 rounded border p-4">
+      No towns yet — they appear here as listings are verified.
+    </p>
+  )}
+  <ul class="mt-8 grid list-none gap-3 sm:grid-cols-2">
+    {towns.map((t) => (
+      <li>
+        <a
+          href={`/towns/${t.slug}/`}
+          class="border-navy-200 bg-salt-50 hover:border-brass-400 block rounded border px-4 py-3 no-underline"
+        >
+          <span class="font-display text-navy-900 text-lg">Town of {t.value}</span>
+          <span class="text-shell-600 block text-sm">
+            {t.count} verified listing{t.count === 1 ? '' : 's'}
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>

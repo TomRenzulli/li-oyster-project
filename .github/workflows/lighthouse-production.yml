@@ -1,0 +1,87 @@
+name: lighthouse-production
+
+# The post-deploy reality check, NOT the release gate. The gate is the
+# `lighthouse` job in ci-cd.yml, which blocks PRs; this one measures what
+# Cloudflare actually serves on the real domain — real headers, real
+# compression, real CDN, real TLS — and so can only run after a deploy.
+#
+# Why it is scheduled rather than triggered by the deploy: Cloudflare Pages'
+# native Git integration reports builds to GitHub as *check runs* and PR
+# comments only. It does not create GitHub Deployment objects, so the
+# `deployment_status` event never fires and there is nothing to hook. Verified
+# 2026-11-22: `GET /repos/.../deployments` is empty despite completed
+# Cloudflare builds. Parsing the preview URL out of the check run's human
+# -readable output was the other option and is too fragile to gate on.
+#
+# Consequence worth being honest about: a regression on production is caught
+# within a day, not within a minute. The blocking local audit on every PR is
+# what stops regressions reaching production in the first place.
+
+on:
+  schedule:
+    # 11:20 UTC daily — a few minutes past the hour, since on-the-hour cron
+    # slots on GitHub are heavily contended and get delayed.
+    - cron: '20 11 * * *'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Origin to audit (no trailing slash)'
+        required: false
+        default: 'https://longislandoysterfarm.com'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lighthouse-production
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Lighthouse (production)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Resolve the target
+        id: target
+        env:
+          # Hard-coded default rather than reading the dispatch input blindly:
+          # workflow_dispatch is restricted to people with write access, but
+          # an audit should still not be pointable at an arbitrary host by
+          # accident. Only the apex and its www alias are accepted.
+          INPUT_URL: ${{ inputs.url }}
+        run: |
+          URL="${INPUT_URL:-https://longislandoysterfarm.com}"
+          case "$URL" in
+            https://longislandoysterfarm.com|https://www.longislandoysterfarm.com) ;;
+            *) echo "::error::Refusing to audit $URL"; exit 1 ;;
+          esac
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Confirm the site is actually up
+        # A Lighthouse run against a parked page or a 522 scores badly for
+        # reasons that have nothing to do with this repo. Fail fast and
+        # legibly instead.
+        env:
+          URL: ${{ steps.target.outputs.url }}
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$URL/")
+          echo "GET $URL/ -> $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::$URL/ returned $code; skipping the audit."
+            exit 1
+          fi
+
+      - name: Audit production
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
+        with:
+          urls: |
+            ${{ steps.target.outputs.url }}/
+            ${{ steps.target.outputs.url }}/farms/
+            ${{ steps.target.outputs.url }}/methodology/
+          configPath: ./lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true

@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FarmCard from '../../components/FarmCard.astro';
+import DirectoryFilters from '../../components/DirectoryFilters.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import { getListedFarms, toIndexRow, facetCounts, facetCountsMulti } from '../../lib/farms';
+
+const farms = await getListedFarms();
+const rows = farms.map(toIndexRow);
+
+const regions = facetCounts(farms, (f) => f.data.region);
+const waterbodies = facetCounts(farms, (f) => f.data.waterbody);
+const towns = facetCounts(farms, (f) => f.data.town);
+const types = facetCountsMulti(farms, (f) => f.data.type);
+
+const site = Astro.site?.href ?? 'https://longislandoysterfarm.com/';
+const schema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Long Island oyster farms, hatcheries and growers',
+    numberOfItems: rows.length,
+    itemListElement: rows.map((r, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: new URL(r.url, site).href,
+      name: r.name,
+    })),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: site },
+      { '@type': 'ListItem', position: 2, name: 'Farms', item: new URL('/farms/', site).href },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title="Long Island oyster farm directory"
+  description="Every verified Long Island oyster farm, hatchery and grower, filterable by region, waterbody, town and what they sell. Each listing cites its sources."
+  ogRoute="farms"
+>
+  <JsonLd schema={schema} />
+
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Farms</span>
+  </nav>
+
+  <h1 class="font-display mt-2 text-4xl">The directory</h1>
+  <p class="mt-4 max-w-prose text-lg">
+    {rows.length === 0 && 'No listings are published yet.'}
+    {rows.length > 0 &&
+      `${rows.length} verified listing${rows.length === 1 ? '' : 's'}. Every entry cites where its facts came from and when they were last checked.`}
+  </p>
+
+  {rows.length > 0 && (
+    <div class="mt-8">
+      <DirectoryFilters
+        regions={regions}
+        waterbodies={waterbodies}
+        towns={towns}
+        types={types}
+        total={rows.length}
+      />
+    </div>
+  )}
+
+  <ul id="farm-list" class="mt-8 grid list-none gap-4 sm:grid-cols-2">
+    {rows.map((farm) => (
+      <li>
+        <FarmCard farm={farm} />
+      </li>
+    ))}
+  </ul>
+
+  <p id="no-results" hidden class="border-navy-200 bg-salt-50 mt-6 rounded border p-4">
+    No listings match those filters.
+  </p>
+
+  <section class="border-navy-200 bg-salt-50 mt-12 rounded border p-5" aria-labelledby="gaps">
+    <h2 id="gaps" class="text-xl">
+      What is missing, and why
+    </h2>
+    <p class="mt-2 max-w-prose">
+      This directory is built from public records and the farms' own published information, and it
+      is incomplete on purpose rather than padded with guesses. The county lease dataset covers the
+      Peconic and Gardiners bay systems only, so South Shore growers — who work under town
+      bottom-leasing programs — are not in it, and neither are hatcheries or nurseries, which hold
+      no bay lease.
+    </p>
+    <p class="mt-3 max-w-prose">
+      If your farm is missing, <a href="/submit/">tell us</a> and a person will read it. Our
+      <a href="/methodology/">methodology</a> explains exactly what we will and will not publish.
+    </p>
+  </section>
+</BaseLayout>

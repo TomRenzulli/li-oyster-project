@@ -1,0 +1,32 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TaxonomyPage from '../../components/TaxonomyPage.astro';
+import { getListedFarms, slugify } from '../../lib/farms';
+import { REGIONS, REGION_INTROS, type Region } from '../../lib/regions';
+
+export const getStaticPaths = (async () => {
+  const farms = await getListedFarms();
+  return REGIONS.map((region) => ({
+    params: { region: slugify(region) },
+    props: { region, farms: farms.filter((f) => f.data.region === region) },
+  }));
+}) satisfies GetStaticPaths;
+
+const { region, farms } = Astro.props;
+const intro = REGION_INTROS[region as Region];
+---
+
+<BaseLayout
+  title={`Oyster farms — ${region}`}
+  description={`Verified oyster farms, hatcheries and growers in the ${region} region of Long Island, with sources for every listing.`}
+>
+  <TaxonomyPage
+    kind="region"
+    value={region}
+    farms={farms}
+    intro={intro}
+    parentLabel="Regions"
+    parentHref="/regions/"
+  />
+</BaseLayout>

@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import { getBrands, slugify } from '../../lib/farms';
+
+const brands = await getBrands();
+const site = Astro.site?.href ?? 'https://longislandoysterfarm.com/';
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Named Long Island oyster brands',
+  numberOfItems: brands.length,
+  itemListElement: brands.map((b, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: b.name,
+    url: new URL(`/oysters/${slugify(b.name)}/`, site).href,
+  })),
+};
+---
+
+<BaseLayout
+  title="Long Island oyster brands"
+  description="An index of named Long Island oysters mapped to the farms that grow them and the waterbodies they come from."
+  ogRoute="oysters"
+>
+  <JsonLd schema={schema} />
+
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Oysters</span>
+  </nav>
+
+  <h1 class="font-display mt-2 text-4xl">Named oysters</h1>
+  <p class="mt-4 max-w-prose text-lg">
+    A Long Island oyster is usually sold under a name, and that name is the farm’s — not the bay’s.
+    This index maps the name on the menu back to the grower and the water it came from. A brand
+    appears here only when the grower’s own material names it.
+  </p>
+
+  {brands.length === 0 && (
+    <p class="border-navy-200 bg-salt-50 mt-8 rounded border p-4">
+      No brands indexed yet. They appear as farm listings are verified.
+    </p>
+  )}
+
+  <ul class="mt-8 grid list-none gap-3 sm:grid-cols-2">
+    {brands.map((b) => (
+      <li class="border-navy-200 bg-salt-50 rounded border px-4 py-3">
+        <a href={`/oysters/${slugify(b.name)}/`} class="font-display text-navy-900 text-lg">
+          {b.name}
+        </a>
+        <span class="text-shell-600 block text-sm">
+          {b.farm.data.name}
+          {b.waterbody && ` · ${b.waterbody}`}
+        </span>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>

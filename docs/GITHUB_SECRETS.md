@@ -1,49 +1,49 @@
 # GitHub Secrets
 
-Set these at **Settings → Secrets and variables → Actions → Repository secrets**. The
-pipeline needs exactly two. If a third ever appears, it needs a line in this file explaining
-why it exists and what it can do.
+**The pipeline needs none.** Set nothing at Settings → Secrets and variables → Actions.
 
-| Secret                  | Used by                               | What it is                                                                                                                |
-| ----------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | `deploy-staging`, `deploy-production` | A custom Cloudflare API token, scoped as narrowly below                                                                   |
-| `CLOUDFLARE_ACCOUNT_ID` | both deploy jobs                      | Your Cloudflare account ID. Not secret in the cryptographic sense, but kept out of the repo so a fork does not inherit it |
+That is the point of the file, not an omission. GitHub Actions in this repo only runs
+_checks_ — secret scanning, vulnerability scanning, lint, types, audit, build, link check —
+and a Lighthouse audit triggered by a deployment event. None of that needs a credential.
+Deployment is done by **Cloudflare Pages' Git integration**, which authenticates to GitHub
+from Cloudflare's side via the Cloudflare GitHub App, so the deploy credential lives in
+Cloudflare and never enters this repo or its Actions environment.
 
-## Creating the API token with minimum scope
+If a secret ever does need to exist here, it gets a row in the table below explaining what it
+is, which job reads it, and what an attacker could do with it. An undocumented secret is a
+bug.
 
-Cloudflare dashboard → **My Profile → API Tokens → Create Token → Create Custom Token**.
+| Secret | Used by | What it is |
+| ------ | ------- | ---------- |
+| _none_ | —       | —          |
 
-- **Permissions:** `Account` → `Cloudflare Pages` → **Edit**. Nothing else. No Zone
-  permissions, no DNS, no Workers Scripts, no Account Settings. Pages:Edit is sufficient for
-  `wrangler pages deploy`.
-- **Account Resources:** Include → _your account only_.
-- **Zone Resources:** none.
-- **Client IP Address Filtering:** leave open. GitHub-hosted runner IPs rotate, so an
-  allowlist here will break deploys rather than secure them.
-- **TTL:** set an expiry — 12 months is reasonable — and put the rotation date in your
-  calendar. An unexpiring deploy token is a permanent credential.
+## Why there is no `CLOUDFLARE_API_TOKEN`
 
-Scoping note: this token can create and modify Pages deployments on this account. It cannot
-touch DNS, read your zone, or edit Workers. If it leaks, an attacker can deploy arbitrary
-content to your Pages project — bad, but recoverable by revoking the token and redeploying. It
-cannot take your domain.
+The earlier design deployed with `cloudflare/wrangler-action` and needed a
+`CLOUDFLARE_API_TOKEN` (Pages:Edit) plus `CLOUDFLARE_ACCOUNT_ID` as repository secrets. Those
+jobs are gone. With Git integration there is no deploy token to scope, rotate, expire, or have
+read out of a runner by a compromised npm dependency during `npm ci`.
 
-## Finding the account ID
+**If you still have those two secrets set from the earlier setup, delete them** — an unused
+credential is pure liability. And revoke the token itself in the Cloudflare dashboard (My
+Profile → API Tokens), because deleting the GitHub secret does not invalidate the token.
 
-Cloudflare dashboard → **Workers & Pages** → right-hand sidebar, **Account ID**. Or
-`npx wrangler whoami`.
+## What this means for the runner
 
-## Rotation
+- Every job declares `permissions: contents: read`. Nothing can write to the repo.
+- Every checkout uses `persist-credentials: false`, so the job's git credential is not left in
+  `.git/config` for a later step to find.
+- Because no job reads a secret, a pull request from a fork is not a credential-exposure risk
+  at all — there is nothing in the environment to exfiltrate.
+- `lighthouse-production.yml` runs on a schedule and on manual dispatch. Its dispatch input is
+  a URL, so it allowlists that to the apex or its `www` alias rather than auditing whatever it
+  is handed. It reads no secret either.
 
-1. Create the replacement token first, with the same scope.
-2. Update the GitHub secret.
-3. Re-run the latest `develop` workflow to confirm the new token deploys.
-4. Only then delete the old token in Cloudflare.
+## Where the real secrets live: Cloudflare
 
-## Not GitHub secrets
-
-These belong in **Cloudflare Pages → Settings → Environment variables**, not in Actions,
-because they are read at request time by Pages Functions rather than at build time:
+These are set at **Cloudflare dashboard → Workers & Pages → the project → Settings →
+Variables and Secrets**, not in GitHub, because they are read at request time by Pages
+Functions (or at build time by Cloudflare's builder) rather than by Actions.
 
 | Variable                                     | Phase | Notes                                                                |
 | -------------------------------------------- | ----- | -------------------------------------------------------------------- |
@@ -55,6 +55,20 @@ because they are read at request time by Pages Functions rather than at build ti
 
 Set each one separately for **Production** and **Preview**. Preview gets test keys. A live
 Stripe key in the preview environment is how a staging deploy charges a real card.
+
+Mark anything genuinely secret as a **Secret**, not a plaintext variable, so it is write-only
+once saved. `PUBLIC_*` values are the exception: they are inlined into client JavaScript by
+design and are not secret in any sense.
+
+### Rotation (Cloudflare-side)
+
+1. Create the replacement value at the provider (Turnstile, GitHub, Stripe).
+2. Update the Preview variable first and confirm a `develop` deployment still works.
+3. Update Production.
+4. Only then revoke the old value at the provider.
+
+`GITHUB_ISSUE_TOKEN` is a fine-grained PAT and therefore expires. Put its expiry date in a
+calendar reminder — the failure mode is `/submit/` silently returning errors months from now.
 
 ## Rules
 
