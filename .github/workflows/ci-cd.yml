@@ -41,7 +41,15 @@ jobs:
           # the gate stays actionable instead of noisy.
           base: ''
           head: HEAD
-          extra_args: --only-verified --fail
+          # The action already passes --fail itself; repeating it here is a
+          # hard error ("flag 'fail' cannot be repeated").
+          extra_args: --only-verified
+          # Pin the scanner image too. The action SHA pins the wrapper, but the
+          # wrapper's default is `trufflehog:latest` — an unpinned container
+          # pulled on every run, which is the same supply-chain hole the SHA
+          # pinning exists to close. Dependabot bumps the SHA; this version
+          # moves with it.
+          version: v3.100.0
 
   vulnerabilities:
     name: Dependency + filesystem scan (Trivy)
