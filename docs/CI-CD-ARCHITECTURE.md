@@ -75,11 +75,24 @@ and rotation are in [GITHUB_SECRETS.md](GITHUB_SECRETS.md). No secret is ever re
 that runs untrusted PR code — the deploy jobs are gated on `push` to a protected branch, so a
 fork PR cannot reach them.
 
-## Suggested branch protection
+## Branch protection
 
-Not settable from the repo, so set these in GitHub UI → Settings → Branches:
+**Applied to both `main` and `develop` (2026-11-21):**
 
-- `main` and `develop`: require a PR, require the `secrets`, `vulnerabilities`, `quality` and
-  `build` checks to pass, require branches up to date, no force-push, no deletion.
-- `main` additionally: require the `develop` → `main` PR to be reviewed (even by you — it is a
-  moment to read the diff).
+| Rule                      | Setting                                                                                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Pull request required     | Yes, 0 approvals (solo operator; a PR is still a forced pause to read the diff)                           |
+| Required checks           | `Secret scan (TruffleHog)`, `Dependency + filesystem scan (Trivy)`, `Lint, format, types, audit`, `Build` |
+| Branch must be up to date | Yes — a green check on a stale base is not a green check                                                  |
+| Linear history            | Required, which matches the squash-merge workflow                                                         |
+| Force push / deletion     | Blocked                                                                                                   |
+| Conversation resolution   | Required before merge                                                                                     |
+| Applies to admins         | **No** — the owner can push directly in an emergency                                                      |
+
+Deploy and Lighthouse are deliberately **not** required checks: they only run on pushes to
+`develop` and `main`, so they never report on a PR and requiring them would deadlock every
+merge.
+
+Admin bypass is a deliberate trade for a one-person project: the gates catch the ordinary
+mistakes, and the owner is not locked out of their own production branch during an incident.
+If a second maintainer ever joins, turn `enforce_admins` on.

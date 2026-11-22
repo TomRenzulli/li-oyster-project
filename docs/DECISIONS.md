@@ -84,3 +84,18 @@ Format: date — decision — why — who decided.
   (GHSA-px8p-9vwx-vf98, infinite loop on malformed ZIP64). Below the `--audit-level=high`
   gate, and the code path never runs: Satori is build-time only and parses our own font and
   content, never user input. Revisit when Satori ships a patched fflate. — engineering
+
+## 2026-11-22 (repo hardening)
+
+- **TruffleHog scanner image pinned to `3.100.0`.** The action SHA pinned only the wrapper;
+  the wrapper's default pulls `trufflehog:latest` on every run, which is the same
+  supply-chain hole SHA pinning exists to close. Note the ghcr tag has no `v` prefix. Found
+  because the job was failing: the action also passes `--fail` itself, so repeating it in
+  `extra_args` is a hard error. — engineering
+- **Branch protection applied to `main` and `develop` with admin bypass.** PR required, four
+  CI checks required, linear history, no force-push or deletion. Admin bypass is the
+  deliberate trade for a solo operator — gates catch ordinary mistakes without locking the
+  owner out during an incident. — owner
+- **Issue labels created** for the submission pipeline: `submission`, `new-listing`,
+  `correction`, `removal-request`, `priority`, `needs-verification`. The Pages Function files
+  against these. — engineering
