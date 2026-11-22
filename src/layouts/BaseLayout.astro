@@ -1,0 +1,122 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Omit on pages that should not be indexed. */
+  noindex?: boolean;
+}
+
+const { title, description, noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const siteName = 'Long Island Oyster Farm';
+const fullTitle = Astro.url.pathname === '/' ? title : `${title} | ${siteName}`;
+---
+
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">
+      Skip to main content
+    </a>
+    <header class="bg-navy-800 text-salt-50">
+      <nav
+        aria-label="Primary"
+        class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4"
+      >
+        <a href="/" class="font-display text-salt-50 text-xl no-underline">
+          Long Island <span class="text-brass-300">Oyster Farm</span>
+        </a>
+        <ul class="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+          <li>
+            <a class="text-salt-100" href="/farms/">
+              Farms
+            </a>
+          </li>
+          <li>
+            <a class="text-salt-100" href="/map/">
+              Map
+            </a>
+          </li>
+          <li>
+            <a class="text-salt-100" href="/oysters/">
+              Oysters
+            </a>
+          </li>
+          <li>
+            <a class="text-salt-100" href="/guides/">
+              Guides
+            </a>
+          </li>
+          <li>
+            <a class="text-salt-100" href="/shop/">
+              Shop
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main" class="mx-auto max-w-5xl px-4 py-10">
+      <slot />
+    </main>
+
+    <footer class="bg-navy-900 text-salt-200 mt-16">
+      <div class="mx-auto max-w-5xl px-4 py-10 text-sm">
+        <p class="max-w-prose">
+          An independent, source-cited index of Long Island oyster hatcheries, farms and growers.
+          Every listing cites where its facts came from and when they were last checked.
+        </p>
+        <ul class="mt-6 flex flex-wrap gap-x-5 gap-y-2">
+          <li>
+            <a class="text-salt-200" href="/methodology/">
+              Methodology
+            </a>
+          </li>
+          <li>
+            <a class="text-salt-200" href="/submit/">
+              Add a listing
+            </a>
+          </li>
+          <li>
+            <a class="text-salt-200" href="/claim/">
+              Claim a listing
+            </a>
+          </li>
+          <li>
+            <a class="text-salt-200" href="/about/">
+              About
+            </a>
+          </li>
+          <li>
+            <a class="text-salt-200" href="/privacy/">
+              Privacy
+            </a>
+          </li>
+          <li>
+            <a class="text-salt-200" href="/terms/">
+              Terms
+            </a>
+          </li>
+        </ul>
+      </div>
+    </footer>
+  </body>
+</html>
