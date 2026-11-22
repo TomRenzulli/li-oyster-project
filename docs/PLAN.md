@@ -54,15 +54,15 @@ One YAML file per farm at `src/content/farms/<slug>.yaml`, validated by Zod in
 
 **Changes from the brief**
 
-| Change | Why |
-|---|---|
-| `sources: {url, label, accessed}[]` instead of `string[]` | A bare URL rots. Per-source access dates let the re-verification job show *which* source is stale, and labels render as a readable citation list on the farm page. |
-| Add `status: 'active' \| 'unconfirmed' \| 'closed' \| 'merged'` | Farms go under. Deleting an entry loses the URL and the research; a status field keeps provenance and lets closed entries 410 or redirect. |
-| Add `geo_precision: 'exact' \| 'approximate' \| 'waterbody_only'` | Some growers list only a lease area or a dock. Honest precision beats a pin that looks exact and isn't. |
-| Add `verification_notes?: string` (private-ish, not rendered) | Keeps the "why we believe this" next to the data. |
-| `last_verified` as `YYYY-MM-DD` string coerced to Date | Keeps YAML diffs readable in review. |
-| `oyster_brands` as `{name, waterbody?, sources}[]` | Brands are the `/oysters/` index's primary key and need their own citations. |
-| `species` default `['Crassostrea virginica']` | As specified. Bay scallops/clams noted in `other_species`. |
+| Change                                                            | Why                                                                                                                                                                |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sources: {url, label, accessed}[]` instead of `string[]`         | A bare URL rots. Per-source access dates let the re-verification job show _which_ source is stale, and labels render as a readable citation list on the farm page. |
+| Add `status: 'active' \| 'unconfirmed' \| 'closed' \| 'merged'`   | Farms go under. Deleting an entry loses the URL and the research; a status field keeps provenance and lets closed entries 410 or redirect.                         |
+| Add `geo_precision: 'exact' \| 'approximate' \| 'waterbody_only'` | Some growers list only a lease area or a dock. Honest precision beats a pin that looks exact and isn't.                                                            |
+| Add `verification_notes?: string` (private-ish, not rendered)     | Keeps the "why we believe this" next to the data.                                                                                                                  |
+| `last_verified` as `YYYY-MM-DD` string coerced to Date            | Keeps YAML diffs readable in review.                                                                                                                               |
+| `oyster_brands` as `{name, waterbody?, sources}[]`                | Brands are the `/oysters/` index's primary key and need their own citations.                                                                                       |
+| `species` default `['Crassostrea virginica']`                     | As specified. Bay scallops/clams noted in `other_species`.                                                                                                         |
 
 **Hard validation rules (build fails, not warns)**
 
@@ -88,6 +88,7 @@ One YAML file per farm at `src/content/farms/<slug>.yaml`, validated by Zod in
 Shopify if monthly merch revenue clears roughly $300.**
 
 Concretely, for launch:
+
 - **Pans, trays, platters:** affiliate links with a visible disclosure. Zero inventory, zero
   fulfillment, zero liability, and it tells us which SKUs people actually click before we
   commit to a supplier.
@@ -98,11 +99,11 @@ Pricing I verified this week (all third-party aggregators unless noted — these
 check on the vendors' own pages before you sign anything, and the vendors' own pages are the
 only thing I'd put in a contract):
 
-| Option | Monthly | Per transaction | Who fulfills what | Your manual work |
-|---|---|---|---|---|
-| **1. Shopify headless** (Storefront API in Astro islands, Shopify-hosted checkout) | Starter ~$5, Basic ~$39 ($29 annual) | Starter reportedly carries a 5% fee even on Shopify Payments; Basic ~2.9% + 30c, ~2% on third-party gateways | App ecosystem auto-routes pans/trays to a drop-ship supplier and stickers/patches to Printful/Printify. Patches you hold ship manually. | Least ongoing work, most setup. Also the heaviest CSP surface. |
-| **2. Stripe Checkout / Payment Links** | $0 | ~2.9% + 30c US cards (+1.5% intl, +1% FX). Stripe Tax ~0.5%/txn on no-code, $0.50/txn on API — and Stripe Tax does **not** file or remit | Nothing automatic. Each order is emailed to you or posted to a supplier by hand/API. | Highest per-order labor. Fine at low volume, painful past ~2 orders/day. |
-| **3. Affiliate + Stripe for merch** | $0 | Only on our merch SKUs | Pans/trays fulfilled entirely by the merchant we link to. Stickers via POD, patches by you. | Lowest risk, lowest revenue. Pure data-gathering phase. |
+| Option                                                                             | Monthly                              | Per transaction                                                                                                                          | Who fulfills what                                                                                                                       | Your manual work                                                         |
+| ---------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **1. Shopify headless** (Storefront API in Astro islands, Shopify-hosted checkout) | Starter ~$5, Basic ~$39 ($29 annual) | Starter reportedly carries a 5% fee even on Shopify Payments; Basic ~2.9% + 30c, ~2% on third-party gateways                             | App ecosystem auto-routes pans/trays to a drop-ship supplier and stickers/patches to Printful/Printify. Patches you hold ship manually. | Least ongoing work, most setup. Also the heaviest CSP surface.           |
+| **2. Stripe Checkout / Payment Links**                                             | $0                                   | ~2.9% + 30c US cards (+1.5% intl, +1% FX). Stripe Tax ~0.5%/txn on no-code, $0.50/txn on API — and Stripe Tax does **not** file or remit | Nothing automatic. Each order is emailed to you or posted to a supplier by hand/API.                                                    | Highest per-order labor. Fine at low volume, painful past ~2 orders/day. |
+| **3. Affiliate + Stripe for merch**                                                | $0                                   | Only on our merch SKUs                                                                                                                   | Pans/trays fulfilled entirely by the merchant we link to. Stickers via POD, patches by you.                                             | Lowest risk, lowest revenue. Pure data-gathering phase.                  |
 
 Why not Shopify on day one: $39/mo plus an app stack is real money against a site with no
 traffic yet, Starter's reported 5% fee is worse than Stripe at any volume, and a Storefront
@@ -113,7 +114,7 @@ architectural point: **product copy lives in the repo, price/inventory/checkout 
 provider**, so the provider is replaceable.
 
 POD caveat found in research: neither Printful nor Printify clearly publishes consumer
-sticker/patch *product* pricing, and Printful's "free branded stickers" offer is a packaging
+sticker/patch _product_ pricing, and Printful's "free branded stickers" offer is a packaging
 insert, not a sellable product. Apliiq appears repeatedly as the embroidery/patch specialist.
 Treat patch sourcing as an open question (see §5) — bulk-order patches from a dedicated
 embroidery shop is likely both cheaper and better quality than POD.
@@ -126,20 +127,20 @@ signature before reading the body.
 
 ## 4. Third-party services needed
 
-| Service | Role | Cost | Requires |
-|---|---|---|---|
-| Cloudflare Pages | Hosting, CI deploy target | Free tier | API token scoped **Pages:Edit on this project only**, account ID |
-| Cloudflare DNS | Already live for the apex | Free | Apex + `www` records, `www` 301 to apex |
-| Cloudflare Turnstile | Bot gate on `/submit/` and `/claim/` | Free | Site key (public) + secret key (Pages env var). Adds `challenges.cloudflare.com` to CSP |
-| Cloudflare Web Analytics | Traffic, cookieless | Free | Beacon token. No cookie banner needed |
-| GitHub | Repo, Actions, Dependabot, issue intake for submissions | Free | A fine-grained PAT for the submit Function to open issues, scoped to issues:write on this one repo |
-| OpenStreetMap tiles | Map basemap | Free, with a usage policy | A real User-Agent/Referer and sane caching. If traffic grows, move to a tile provider with an SLA |
-| Pagefind | Static search index, built at build time | Free, no service | Nothing — it's a build step, no runtime dependency |
-| Stripe | Merch checkout | $0/mo, ~2.9%+30c | Business details, bank account. Live keys only in Pages env, never in repo |
-| Sticker POD (Printful/Printify/other) | Sticker fulfillment | Per-unit | Account; final per-unit pricing still to confirm |
-| Patch supplier (Apliiq or a bulk embroidery shop) | Patches | Per-unit + setup/digitizing | Quote needed; artwork |
-| Email list | Newsletter, double opt-in | Kit free tier ~10k subs (1 automation, Kit branding); Buttondown free ~100 subs then ~$9/mo; MailerLite free tier recently cut to ~250-500 subs | Domain auth records (SPF/DKIM/DMARC). None of the sources I found confirmed double opt-in support — must verify in docs before committing |
-| Lighthouse CI | Release gate | Free | Nothing, or a free LHCI server if we want history |
+| Service                                           | Role                                                    | Cost                                                                                                                                            | Requires                                                                                                                                  |
+| ------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Cloudflare Pages                                  | Hosting, CI deploy target                               | Free tier                                                                                                                                       | API token scoped **Pages:Edit on this project only**, account ID                                                                          |
+| Cloudflare DNS                                    | Already live for the apex                               | Free                                                                                                                                            | Apex + `www` records, `www` 301 to apex                                                                                                   |
+| Cloudflare Turnstile                              | Bot gate on `/submit/` and `/claim/`                    | Free                                                                                                                                            | Site key (public) + secret key (Pages env var). Adds `challenges.cloudflare.com` to CSP                                                   |
+| Cloudflare Web Analytics                          | Traffic, cookieless                                     | Free                                                                                                                                            | Beacon token. No cookie banner needed                                                                                                     |
+| GitHub                                            | Repo, Actions, Dependabot, issue intake for submissions | Free                                                                                                                                            | A fine-grained PAT for the submit Function to open issues, scoped to issues:write on this one repo                                        |
+| OpenStreetMap tiles                               | Map basemap                                             | Free, with a usage policy                                                                                                                       | A real User-Agent/Referer and sane caching. If traffic grows, move to a tile provider with an SLA                                         |
+| Pagefind                                          | Static search index, built at build time                | Free, no service                                                                                                                                | Nothing — it's a build step, no runtime dependency                                                                                        |
+| Stripe                                            | Merch checkout                                          | $0/mo, ~2.9%+30c                                                                                                                                | Business details, bank account. Live keys only in Pages env, never in repo                                                                |
+| Sticker POD (Printful/Printify/other)             | Sticker fulfillment                                     | Per-unit                                                                                                                                        | Account; final per-unit pricing still to confirm                                                                                          |
+| Patch supplier (Apliiq or a bulk embroidery shop) | Patches                                                 | Per-unit + setup/digitizing                                                                                                                     | Quote needed; artwork                                                                                                                     |
+| Email list                                        | Newsletter, double opt-in                               | Kit free tier ~10k subs (1 automation, Kit branding); Buttondown free ~100 subs then ~$9/mo; MailerLite free tier recently cut to ~250-500 subs | Domain auth records (SPF/DKIM/DMARC). None of the sources I found confirmed double opt-in support — must verify in docs before committing |
+| Lighthouse CI                                     | Release gate                                            | Free                                                                                                                                            | Nothing, or a free LHCI server if we want history                                                                                         |
 
 Sources for the above pricing — all secondary, all to be re-checked on vendor pages:
 [Shopify pricing roundup](https://www.websitebuilderexpert.com/shopify-pricing),
