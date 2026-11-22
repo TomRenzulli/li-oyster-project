@@ -1,0 +1,208 @@
+---
+/**
+ * Posts to /api/submit (a Pages Function). Nothing auto-publishes: the function
+ * verifies Turnstile server-side and files a GitHub issue for human review.
+ *
+ * The form works as a plain HTML POST; the script only improves the feedback.
+ */
+interface Props {
+  kind: 'submit' | 'claim';
+}
+const { kind } = Astro.props;
+const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+---
+
+<form id="submission-form" method="post" action="/api/submit" class="mt-8 max-w-2xl">
+  <input type="hidden" name="kind" value={kind} />
+
+  <div class="space-y-5">
+    <div>
+      <label for="farm_name" class="block font-semibold">
+        Farm or business name{' '}
+        <span class="text-brass-600" aria-hidden="true">
+          *
+        </span>
+      </label>
+      <input
+        type="text"
+        id="farm_name"
+        name="farm_name"
+        required
+        maxlength="120"
+        class="border-navy-300 bg-salt-50 mt-1 w-full rounded border px-3 py-2"
+      />
+    </div>
+
+    <div>
+      <label for="website" class="block font-semibold">
+        Website or social page
+      </label>
+      <input
+        type="url"
+        id="website"
+        name="website"
+        maxlength="300"
+        placeholder="https://"
+        class="border-navy-300 bg-salt-50 mt-1 w-full rounded border px-3 py-2"
+      />
+      <p class="text-shell-600 mt-1 text-sm">
+        This matters more than anything else on the form. We publish what a business publishes about
+        itself, so a link to your own page is what lets us list you.
+      </p>
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <label for="town" class="block font-semibold">
+          Town or hamlet
+        </label>
+        <input
+          type="text"
+          id="town"
+          name="town"
+          maxlength="80"
+          class="border-navy-300 bg-salt-50 mt-1 w-full rounded border px-3 py-2"
+        />
+      </div>
+      <div>
+        <label for="waterbody" class="block font-semibold">
+          Waterbody
+        </label>
+        <input
+          type="text"
+          id="waterbody"
+          name="waterbody"
+          maxlength="80"
+          placeholder="e.g. Great South Bay"
+          class="border-navy-300 bg-salt-50 mt-1 w-full rounded border px-3 py-2"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label for="contact_email" class="block font-semibold">
+        Your email{' '}
+        <span class="text-brass-600" aria-hidden="true">
+          *
+        </span>
+      </label>
+      <input
+        type="email"
+        id="contact_email"
+        name="contact_email"
+        required
+        maxlength="200"
+        class="border-navy-300 bg-salt-50 mt-1 w-full rounded border px-3 py-2"
+      />
+      <p class="text-shell-600 mt-1 text-sm">
+        Used only to follow up on this submission. Not published, not added to any list.
+      </p>
+    </div>
+
+    <div>
+      <label for="message" class="block font-semibold">
+        {kind === 'claim' ? 'What needs correcting?' : 'Anything else we should know'}
+        {kind === 'claim' && (
+          <span class="text-brass-600" aria-hidden="true">
+            {' '}
+            *
+          </span>
+        )}
+      </label>
+      <textarea
+        id="message"
+        name="message"
+        rows="6"
+        required={kind === 'claim'}
+        maxlength="4000"
+        class="border-navy-300 bg-salt-50 mt-1 w-full rounded border px-3 py-2"
+      ></textarea>
+    </div>
+
+    {kind === 'claim' && (
+      <fieldset class="border-navy-200 rounded border p-4">
+        <legend class="font-semibold">What would you like to happen?</legend>
+        <div class="mt-2 space-y-2">
+          <label class="flex items-start gap-2">
+            <input
+              type="radio"
+              name="action"
+              value="correct"
+              checked
+              class="accent-brass-500 mt-1"
+            />
+            <span>Correct the details on my listing</span>
+          </label>
+          <label class="flex items-start gap-2">
+            <input type="radio" name="action" value="remove" class="accent-brass-500 mt-1" />
+            <span>
+              Remove my listing entirely
+              <span class="text-shell-600 block text-sm">
+                Honoured without argument and without requiring proof of ownership.
+              </span>
+            </span>
+          </label>
+        </div>
+      </fieldset>
+    )}
+
+    {turnstileKey ? (
+      <div class="cf-turnstile" data-sitekey={turnstileKey} data-theme="light" />
+    ) : (
+      <p class="border-brass-400 bg-brass-300/20 rounded border p-3 text-sm">
+        Bot protection is not configured in this environment, so this form is disabled. Set
+        <code>PUBLIC_TURNSTILE_SITE_KEY</code> to enable it.
+      </p>
+    )}
+
+    <div class="flex flex-wrap items-center gap-4">
+      <button
+        type="submit"
+        disabled={!turnstileKey}
+        class="bg-navy-700 text-salt-50 hover:bg-navy-600 rounded px-5 py-2.5 font-semibold disabled:opacity-50"
+      >
+        {kind === 'claim' ? 'Send correction' : 'Submit listing'}
+      </button>
+      <p id="form-status" role="status" aria-live="polite" class="text-sm"></p>
+    </div>
+  </div>
+</form>
+
+{turnstileKey && (
+  <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer />
+)}
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('#submission-form');
+  const statusEl = document.querySelector<HTMLElement>('#form-status');
+
+  form?.addEventListener('submit', async (event) => {
+    if (!statusEl) return;
+    event.preventDefault();
+    const button = form.querySelector<HTMLButtonElement>('button[type=submit]');
+    if (button) button.disabled = true;
+    statusEl.textContent = 'Sending…';
+
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { accept: 'application/json' },
+      });
+      const data: { ok?: boolean; error?: string } = await res.json().catch(() => ({}));
+
+      if (res.ok && data.ok) {
+        form.hidden = true;
+        statusEl.textContent =
+          'Thank you — a person will read this. We will email you if we need anything else.';
+      } else {
+        statusEl.textContent =
+          data.error ?? 'That did not go through. Please try again, or email us directly.';
+        if (button) button.disabled = false;
+      }
+    } catch {
+      statusEl.textContent = 'Network error. Please try again.';
+      if (button) button.disabled = false;
+    }
+  });
+</script>

@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FarmMap from '../components/FarmMap.astro';
+import { getListedFarms } from '../lib/farms';
+
+const farms = await getListedFarms();
+const pins = farms
+  .filter((f) => f.data.geo && f.data.geo_precision)
+  .map((f) => ({
+    name: f.data.name,
+    url: `/farms/${f.id}/`,
+    lat: f.data.geo!.lat,
+    lng: f.data.geo!.lng,
+    precision: f.data.geo_precision!,
+    place: [f.data.hamlet || f.data.town, f.data.waterbody].filter(Boolean).join(' · '),
+  }));
+---
+
+<BaseLayout
+  title="Map of Long Island oyster farms"
+  description="An interactive map of verified Long Island oyster farms, hatcheries and growers, with locations only where they can be verified."
+  ogRoute="map"
+>
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Map</span>
+  </nav>
+  <h1 class="font-display mt-2 text-4xl">Map</h1>
+  <p class="mt-4 max-w-prose text-lg">
+    Where Long Island’s oyster operations are — as far as their own published information and the
+    public record will support.
+  </p>
+  <div class="mt-8">
+    <FarmMap pins={pins} />
+  </div>
+</BaseLayout>

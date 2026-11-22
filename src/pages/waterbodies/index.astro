@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getListedFarms, facetCounts } from '../../lib/farms';
+
+const farms = await getListedFarms();
+const waterbodies = facetCounts(farms, (f) => f.data.waterbody);
+---
+
+<BaseLayout
+  title="Long Island oyster waterbodies"
+  description="The bays, harbours and sounds where Long Island oysters are grown, and the verified farms working each one."
+>
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Waterbodies</span>
+  </nav>
+  <h1 class="font-display mt-2 text-4xl">Waterbodies</h1>
+  <p class="mt-4 max-w-prose text-lg">
+    An oyster tastes like the water it grew in. These are the bays, harbours and sounds the farms in
+    this directory work — listed only where a farm’s own source names the water.
+  </p>
+  {waterbodies.length === 0 && (
+    <p class="border-navy-200 bg-salt-50 mt-8 rounded border p-4">
+      No waterbodies yet — they appear here as listings are verified.
+    </p>
+  )}
+  <ul class="mt-8 grid list-none gap-3 sm:grid-cols-2">
+    {waterbodies.map((w) => (
+      <li>
+        <a
+          href={`/waterbodies/${w.slug}/`}
+          class="border-navy-200 bg-salt-50 hover:border-brass-400 block rounded border px-4 py-3 no-underline"
+        >
+          <span class="font-display text-navy-900 text-lg">{w.value}</span>
+          <span class="text-shell-600 block text-sm">
+            {w.count} verified listing{w.count === 1 ? '' : 's'}
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>

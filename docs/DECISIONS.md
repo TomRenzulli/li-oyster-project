@@ -41,3 +41,46 @@ Format: date — decision — why — who decided.
   be weakened in the same PR as the data it guards; a second check cannot be. — engineering
 - **Trivy `ignore-unfixed: true`.** Unpatchable HIGHs are not actionable in a PR and a gate
   people bypass is worse than no gate. They surface in logs for the monthly pass. — engineering
+
+## 2026-11-21 (Phase 2)
+
+- **Lease data comes from the county's ArcGIS feature service, not the PDF.** Same authority
+  and the same inventory, but structured and re-runnable, so a later snapshot can be diffed.
+  The PDF's text layer is positional and lossy. — engineering
+- **A lease is not a business, and lease individuals are never republished.** 8 of 33 lessees
+  are personal names; they are counted in the research queue and excluded from it by policy.
+  — engineering, per RESEARCH_METHOD.md
+- **Directory filtering is client-side over server-rendered cards, not Pagefind.** The full
+  list works with JavaScript off, filtering is instant with no network round-trip, and there
+  is no index to drift out of sync with the content. At tens-to-hundreds of farms this is both
+  faster and simpler. Pagefind still runs in the build and indexes the site, ready to power
+  full-text search over the Phase 3 guides. — engineering
+- **`geo` is published only with `geo_precision`,** enforced by both the Zod schema and
+  `verify-data.mjs`. A lease centroid is a point of open water and is never used as a business
+  location. Consequence: `/map/` currently has no pins and says so plainly. — engineering
+- **`style-src-attr 'unsafe-inline'` added for Leaflet**, which positions tiles by writing
+  `style="transform:…"` onto elements. This keeps the far more dangerous `style-src` on
+  `'self'`, so injected `<style>` blocks stay blocked. Drops out if the map ever does.
+  — engineering
+- **`vite.build.assetsInlineLimit: 0`.** Astro inlines small island scripts as
+  `<script type="module">…</script>`, which `script-src 'self'` blocks. This was caught by
+  inspecting the real build output, not assumed. Forcing external files keeps one strict CSP
+  in `_headers` instead of per-build hashes. A CI step now asserts no inline script or style
+  ever reappears. — engineering
+- **`data:` dropped from img-src** — nothing we serve uses a data URI now that nothing is
+  inlined. Must be revisited if the Pagefind UI bundle is ever adopted, as its CSS uses them.
+  — engineering
+- **Nav links only to pages that exist.** `/guides/` and `/shop/` links arrive with Phases 3
+  and 4. A new CI step (`check:links`) fails the build on any internal link to a missing page.
+  — engineering
+- **`zod` added as a direct dependency.** Astro 7 deprecates the `z` re-export from
+  `astro:content`; importing from `zod` directly clears the warnings and npm dedupes it to the
+  single copy Astro already ships (4.6.7). — engineering
+- **OG images via Satori + resvg, font from `@fontsource/eb-garamond`.** The font is an
+  auditable npm dependency under the SIL OFL rather than a binary committed to the repo or a
+  build-time download. Generated at build time, so they are plain files on the CDN.
+  — engineering
+- **Known moderate advisory accepted:** `satori` depends on `fflate` 0.7.x
+  (GHSA-px8p-9vwx-vf98, infinite loop on malformed ZIP64). Below the `--audit-level=high`
+  gate, and the code path never runs: Satori is build-time only and parses our own font and
+  content, never user input. Revisit when Satori ships a patched fflate. — engineering

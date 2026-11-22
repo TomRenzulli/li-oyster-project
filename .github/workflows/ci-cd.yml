@@ -77,7 +77,7 @@ jobs:
         run: npm run lint
       - name: Prettier check
         run: npm run format:check
-      - name: Astro type check
+      - name: Astro type check (includes Pages Functions)
         run: npm run typecheck
       - name: npm audit
         run: npm audit --audit-level=high
@@ -100,6 +100,27 @@ jobs:
       - run: npm run build
       - name: Confirm security headers shipped with the build
         run: test -f dist/_headers && grep -q 'Content-Security-Policy' dist/_headers
+
+      - name: Confirm the strict CSP is still satisfiable
+        # The CSP has no script-src 'unsafe-inline' and no style-src
+        # 'unsafe-inline'. Astro inlines small island scripts by default, which
+        # would silently break every page under that policy, so assert the
+        # build emitted none. application/ld+json is not a script type and is
+        # not governed by script-src, so it is excluded.
+        run: |
+          if grep -rhoE '<script[^>]*>' dist --include='*.html' \
+            | grep -v 'src=' | grep -v 'application/ld+json' | grep .; then
+            echo "::error::Inline <script> found in the build; the CSP would block it."
+            exit 1
+          fi
+          if grep -rqE '<style[^>]*>|style="' dist --include='*.html'; then
+            echo "::error::Inline style found in the build; the CSP would block it."
+            exit 1
+          fi
+          echo "No inline scripts or styles. CSP holds."
+
+      - name: Check internal links
+        run: npm run check:links
 
   deploy-staging:
     name: Deploy staging

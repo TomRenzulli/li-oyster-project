@@ -1,0 +1,107 @@
+---
+/**
+ * Leaflet + OpenStreetMap tiles. No Google Maps, no API key, no third-party
+ * script host: Leaflet is bundled from npm and served from our own origin, so
+ * the only CSP addition the map needs is the OSM tile host under img-src.
+ *
+ * Only farms with BOTH `geo` and `geo_precision` are plotted, and the
+ * precision is shown in the popup. A lease centroid is never used as a
+ * business location.
+ */
+interface Pin {
+  name: string;
+  url: string;
+  lat: number;
+  lng: number;
+  precision: 'exact' | 'approximate' | 'waterbody_only';
+  place: string;
+}
+interface Props {
+  pins: Pin[];
+}
+const { pins } = Astro.props;
+// waterbody_only means "we know the bay, not the spot" — that is not a pin.
+const plottable = pins.filter((p) => p.precision !== 'waterbody_only');
+---
+
+{plottable.length === 0 ? (
+  <div class="border-navy-200 bg-salt-50 rounded border p-6">
+    <h2 class="text-xl">No mapped listings yet</h2>
+    <p class="mt-2 max-w-prose">
+      Coordinates are only published where we can stand behind them. A county lease centroid is a
+      point of open water, not a place you can visit, and we will not geocode a business from an
+      address we have not verified — a pin that looks exact but is a guess is worse than no pin. As
+      listings gain verified locations they will appear here.
+    </p>
+    <p class="mt-3">
+      In the meantime, browse by <a href="/waterbodies/">waterbody</a>,<a href="/towns/">town</a> or{' '}
+      <a href="/regions/">region</a>.
+    </p>
+  </div>
+) : (
+  <>
+    <div
+      id="farm-map"
+      class="border-navy-200 h-[65vh] min-h-96 w-full rounded border"
+      role="application"
+      aria-label="Map of Long Island oyster farms"
+      data-pins={JSON.stringify(plottable)}
+    />
+    <noscript>
+      <p class="border-navy-200 bg-salt-50 mt-3 rounded border p-4">
+        The map needs JavaScript. The same farms are listed in
+        <a href="/farms/">the directory</a>, which works without it.
+      </p>
+    </noscript>
+  </>
+)}
+
+{plottable.length > 0 && (
+  <>
+    <p class="text-shell-600 mt-3 text-sm">
+      Map data &copy;{' '}
+      <a href="https://www.openstreetmap.org/copyright" rel="noopener">
+        OpenStreetMap
+      </a>{' '}
+      contributors. Pins marked <em>approximate</em> show a hamlet or dock, not a surveyed point.
+    </p>
+
+    <script>
+      import L from 'leaflet';
+      import 'leaflet/dist/leaflet.css';
+
+      interface Pin {
+        name: string;
+        url: string;
+        lat: number;
+        lng: number;
+        precision: string;
+        place: string;
+      }
+
+      const el = document.querySelector<HTMLElement>('#farm-map');
+      const pins: Pin[] = el?.dataset.pins ? JSON.parse(el.dataset.pins) : [];
+
+      if (el && pins.length > 0) {
+        const map = L.map(el, { scrollWheelZoom: false });
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 18,
+          attribution: '&copy; OpenStreetMap contributors',
+        }).addTo(map);
+
+        const group = L.featureGroup().addTo(map);
+        for (const p of pins) {
+          const escape = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+          L.marker([p.lat, p.lng], { title: p.name })
+            .bindPopup(
+              `<strong>${escape(p.name)}</strong><br>${escape(p.place)}` +
+                (p.precision === 'approximate' ? '<br><em>Approximate location</em>' : '') +
+                `<br><a href="${escape(p.url)}">View listing</a>`,
+            )
+            .addTo(group);
+        }
+        map.fitBounds(group.getBounds().pad(0.2));
+      }
+    </script>
+  </>
+)}

@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SubmissionForm from '../components/SubmissionForm.astro';
+---
+
+<BaseLayout
+  title="Claim or correct your listing"
+  description="Farms can confirm, correct or remove their listing on longislandoysterfarm.com. Removal requests are honoured without argument."
+>
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Claim a listing</span>
+  </nav>
+
+  <h1 class="font-display mt-2 text-4xl">Claim or correct your listing</h1>
+
+  <p class="mt-4 max-w-prose text-lg">
+    This directory lists farms from public records and their own published information, which means
+    you did not ask to be here. If anything is wrong, or you would rather not be listed, this form
+    reaches a person.
+  </p>
+
+  <div class="border-navy-200 bg-salt-50 mt-6 max-w-prose rounded border p-4">
+    <h2 class="text-lg">Our commitments to you</h2>
+    <ul class="mt-2 list-disc space-y-1.5 pl-5">
+      <li>
+        <strong>Removal is honoured without argument</strong> and without requiring you to prove you
+        own the business. We would rather lose a listing than keep one a farm does not want.
+      </li>
+      <li>
+        Corrections are applied with your own material as the source, and the listing records that.
+      </li>
+      <li>A claimed listing is marked as confirmed by the farm.</li>
+      <li>We never add a personal name or a private address, even if you send one.</li>
+      <li>Nothing here costs money. There is no paid placement and no fee to be listed.</li>
+    </ul>
+  </div>
+
+  <SubmissionForm kind="claim" />
+</BaseLayout>

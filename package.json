@@ -2,13 +2,21 @@
   "dependencies": {
     "@astrojs/mdx": "^8.1.6",
     "@astrojs/sitemap": "^3.7.6",
+    "@fontsource/eb-garamond": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.3.5",
     "astro": "^7.4.13",
-    "tailwindcss": "^4.3.5"
+    "leaflet": "^1.9.4",
+    "pagefind": "^1.6.0",
+    "satori": "^0.63.2",
+    "tailwindcss": "^4.3.5",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
+    "@cloudflare/workers-types": "^5.20261121.1",
     "@eslint/js": "^10.0.1",
+    "@types/leaflet": "^1.9.22",
     "eslint": "^10.15.0",
     "eslint-plugin-astro": "^3.2.1",
     "globals": "^17.14.0",
@@ -28,19 +36,24 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && pagefind --site dist --output-subdir pagefind",
     "preview": "astro preview",
     "astro": "astro",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "astro check",
+    "typecheck": "astro check && npm run typecheck:functions",
     "verify:data": "node scripts/verify-data.mjs",
     "verify:stale": "node scripts/verify-data.mjs --stale",
     "audit": "npm audit --audit-level=high",
     "check": "npm run lint && npm run format:check && npm run typecheck && npm run verify:data",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck:functions": "tsc -p functions/tsconfig.json",
+    "research": "node scripts/research/fetch-suffolk-leases.mjs && node scripts/research/leases-to-leads.mjs",
+    "data:export": "node scripts/research/yaml-to-csv.mjs",
+    "data:import": "node scripts/research/csv-to-yaml.mjs",
+    "check:links": "node scripts/check-links.mjs"
   },
   "lint-staged": {
     "*.{js,mjs,ts,astro}": [

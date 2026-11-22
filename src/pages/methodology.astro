@@ -1,0 +1,100 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="How this directory is built"
+  description="The sourcing rules behind longislandoysterfarm.com: what we publish, what we refuse to publish, and how every fact is cited and dated."
+>
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Methodology</span>
+  </nav>
+
+  <h1 class="font-display mt-2 text-4xl">How this directory is built</h1>
+
+  <p class="mt-5 max-w-prose text-lg">
+    A directory is only worth reading if you can tell where it got its facts. Every listing here
+    cites its sources and records the date a person last checked them.
+  </p>
+
+  <h2 class="mt-10 text-2xl">What we publish</h2>
+  <p class="mt-3 max-w-prose">Every published fact traces to one of four kinds of source:</p>
+  <ol class="mt-3 max-w-prose list-decimal space-y-2 pl-5">
+    <li>
+      <strong>The business’s own published material</strong> — its site, its own social accounts,
+      its own price list. The best source for what a farm sells and what it calls its oysters.
+    </li>
+    <li>
+      <strong>Government records</strong> — the Suffolk County Shellfish Aquaculture Lease Program
+      inventory and its public GIS services, New York State DEC material, and town shellfish and
+      mariculture programs.
+    </li>
+    <li>
+      <strong>Institutional programs</strong> — Cornell Cooperative Extension of Suffolk County and
+      New York Sea Grant.
+    </li>
+    <li>
+      <strong>Named press and non-profit coverage</strong>, for context only — never as the only
+      source for a contact detail, an address, or a claim about how a farm operates.
+    </li>
+  </ol>
+
+  <h2 class="mt-10 text-2xl">What we refuse to publish</h2>
+  <ul class="mt-3 max-w-prose list-disc space-y-2 pl-5">
+    <li>
+      <strong>A business inferred from a lease.</strong> A lease is a property record. Many
+      leaseholders are private individuals with no public business, and some businesses hold no
+      lease at all.
+    </li>
+    <li>
+      <strong>Personal names.</strong> A grower’s name appears only where the business itself
+      publishes it. Lease records name individuals; we do not republish those names.
+    </li>
+    <li>
+      <strong>Private addresses.</strong> Only an address a business publishes as a place of
+      business — never a residence, even where a public record connects one to the operation.
+    </li>
+    <li>
+      <strong>Map pins we cannot stand behind.</strong> Every coordinate carries a precision. A
+      lease centroid is a point of open water, not somewhere you can visit, and is never used as a
+      business location.
+    </li>
+    <li>
+      <strong>Copied descriptions.</strong> A farm’s own words belong to the farm.
+    </li>
+    <li>
+      <strong>Plausible guesses.</strong> If a source does not say it, the field stays empty and the
+      page says “Not listed”. That is not the same as “no”.
+    </li>
+  </ul>
+
+  <h2 class="mt-10 text-2xl">What this directory does not yet cover</h2>
+  <p class="mt-3 max-w-prose">
+    The county lease program covers the Peconic and Gardiners bay systems only. South Shore growers
+    — the Great South Bay, Moriches and Shinnecock — work bay bottom leased from their
+    <em>town</em>, and hatcheries and nurseries hold no bay lease at all. None of them appear in the
+    county dataset, so our coverage of them is thinner and is being built from town programs and the
+    farms’ own publications. A farm’s absence from this directory is not evidence it does not exist.
+  </p>
+
+  <h2 class="mt-10 text-2xl">Staying current</h2>
+  <p class="mt-3 max-w-prose">
+    Each listing shows when it was last verified, and anything older than about six months is
+    flagged for re-checking. Contact details carry a stricter rule: they are removed rather than
+    kept if we cannot re-confirm them from a source read within the last year. Stale contact details
+    are the fastest way to send someone to a farm that has closed.
+  </p>
+
+  <h2 class="mt-10 text-2xl">Corrections</h2>
+  <p class="mt-3 max-w-prose">
+    Any farm can <a href="/claim/">correct or remove its listing</a>. Removal requests are honoured
+    without argument and without proof of ownership. Nothing on this site publishes automatically; a
+    person reviews every change.
+  </p>
+
+  <h2 class="mt-10 text-2xl">Independence</h2>
+  <p class="mt-3 max-w-prose">
+    No farm pays to be listed, and no listing can be bought, improved or removed with money. Where
+    the shop earns a commission on a product, that is disclosed on the page it appears on.
+  </p>
+</BaseLayout>

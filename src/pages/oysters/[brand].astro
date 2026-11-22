@@ -1,0 +1,92 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import VerifiedBadge from '../../components/VerifiedBadge.astro';
+import { getBrands, slugify } from '../../lib/farms';
+
+export const getStaticPaths = (async () => {
+  const brands = await getBrands();
+  // One page per brand name; a name shared by two growers lists both.
+  const byName = new Map<string, typeof brands>();
+  for (const b of brands) {
+    const key = slugify(b.name);
+    byName.set(key, [...(byName.get(key) ?? []), b]);
+  }
+  return [...byName.entries()].map(([brand, entries]) => ({
+    params: { brand },
+    props: { name: entries[0]!.name, entries },
+  }));
+}) satisfies GetStaticPaths;
+
+const { name, entries } = Astro.props;
+const site = Astro.site?.href ?? 'https://longislandoysterfarm.com/';
+const waters = [...new Set(entries.map((e) => e.waterbody).filter(Boolean))];
+
+const schema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: `${name} oysters`,
+    category: 'Oysters',
+    description: `${name} is a named Long Island oyster grown by ${entries.map((e) => e.farm.data.name).join(', ')}${waters.length ? ` in ${waters.join(', ')}` : ''}.`,
+    ...(entries[0]?.farm.data.website ? { brand: { '@type': 'Brand', name } } : {}),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: site },
+      { '@type': 'ListItem', position: 2, name: 'Oysters', item: new URL('/oysters/', site).href },
+      { '@type': 'ListItem', position: 3, name, item: new URL(Astro.url.pathname, site).href },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title={`${name} oysters`}
+  description={`${name} oysters: who grows them, which Long Island waterbody they come from, and where to buy them.`}
+  ogRoute={`oysters/${slugify(name)}`}
+>
+  <JsonLd schema={schema} />
+
+  <nav aria-label="Breadcrumb" class="text-shell-600 text-sm">
+    <a href="/">Home</a> <span aria-hidden="true">/</span>
+    <a href="/oysters/">Oysters</a> <span aria-hidden="true">/</span>
+    <span>{name}</span>
+  </nav>
+
+  <h1 class="font-display mt-2 text-4xl">{name}</h1>
+  <p class="mt-4 max-w-prose text-lg">
+    {entries.length === 1
+      ? `${name} is grown by ${entries[0]!.farm.data.name}${waters.length ? `, in ${waters.join(' and ')}` : ''}.`
+      : `${name} is a name used by ${entries.length} growers in this directory.`}
+  </p>
+
+  <section class="mt-8" aria-labelledby="growers">
+    <h2 id="growers" class="text-2xl">
+      Grown by
+    </h2>
+    <ul class="mt-3 list-none space-y-4">
+      {entries.map((e) => (
+        <li class="border-navy-200 bg-salt-50 rounded border p-4">
+          <h3 class="font-display text-xl">
+            <a href={`/farms/${e.farm.id}/`}>{e.farm.data.name}</a>
+          </h3>
+          <p class="text-shell-600 mt-1 text-sm">
+            {[e.farm.data.hamlet || e.farm.data.town, e.waterbody].filter(Boolean).join(' · ')}
+          </p>
+          <div class="mt-3">
+            <VerifiedBadge date={String(e.farm.data.last_verified)} compact />
+          </div>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <p class="text-shell-600 mt-8 max-w-prose text-sm">
+    We do not publish tasting notes we have not been given by the grower. Where a farm describes its
+    own oyster, that description lives on the farm’s page with its source.
+  </p>
+</BaseLayout>

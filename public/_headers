@@ -1,19 +1,34 @@
 # Security headers for Cloudflare Pages.
 #
-# The CSP is deliberately minimal: it allowlists only what the site uses TODAY.
-# Phase 2 (map), Phase 3 (email signup) and Phase 4 (shop) each add their own
-# origins, and each addition belongs in the PR that needs it, with a one-line
-# reason. Origins already identified as future additions, NOT yet granted:
-#   /map/     img-src  https://*.tile.openstreetmap.org
-#   /submit/  script-src + frame-src  https://challenges.cloudflare.com
-#   analytics script-src + connect-src  https://static.cloudflareinsights.com
-#   /shop/    script-src + frame-src  https://js.stripe.com
+# The CSP allowlists only what the site uses today. Each origin below names the
+# feature that needs it; adding one belongs in the PR of the feature that needs
+# it. No 'unsafe-inline' for script-src and no 'unsafe-eval', ever.
 #
-# No 'unsafe-inline' and no 'unsafe-eval' anywhere. Astro is configured with
-# inlineStylesheets:'never' so style-src stays on 'self'.
+# Granted so far:
+#   img-src        https://*.tile.openstreetmap.org  /map/ basemap tiles
+#   script-src     https://challenges.cloudflare.com Turnstile widget (/submit/, /claim/)
+#   frame-src      https://challenges.cloudflare.com Turnstile renders in an iframe
+#   style-src-attr 'unsafe-inline'                   see note below
+#
+# Not yet granted, expected later:
+#   script-src + connect-src  https://static.cloudflareinsights.com  (analytics, Phase 5)
+#   script-src + frame-src    https://js.stripe.com                  (shop, Phase 4)
+#
+# `data:` is deliberately absent from img-src: nothing we serve uses a data URI
+# (astro.config sets assetsInlineLimit:0, so no asset is ever inlined). If the
+# Pagefind UI bundle is ever adopted, its CSS does use data URIs and this needs
+# revisiting.
+#
+# Note on style-src-attr: Leaflet positions tiles and markers by writing
+# `style="transform: ..."` directly onto elements, and CSP governs inline style
+# ATTRIBUTES separately from <style> blocks. Granting 'unsafe-inline' only on
+# style-src-attr keeps the much more dangerous `style-src` on 'self' — inline
+# and injected <style> blocks stay blocked — while letting the map work.
+# Astro is configured with inlineStylesheets:'never' so style-src needs no
+# relaxation. If the map is ever dropped, drop this directive with it.
 
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' https://*.tile.openstreetmap.org; font-src 'self'; connect-src 'self'; manifest-src 'self'; frame-src https://challenges.cloudflare.com; form-action 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
@@ -27,5 +42,15 @@
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
+/pagefind/*
+  Cache-Control: public, max-age=86400
+
+/og/*
+  Cache-Control: public, max-age=604800
+
 /favicon.svg
   Cache-Control: public, max-age=604800
+
+# Never cache the submission endpoint.
+/api/*
+  Cache-Control: no-store

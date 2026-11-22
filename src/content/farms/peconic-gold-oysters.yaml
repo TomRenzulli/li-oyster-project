@@ -1,0 +1,59 @@
+name: Peconic Gold Oysters
+type:
+  - farm
+  - retail/raw bar
+oyster_brands:
+  - name: Peconic Gold
+    waterbody: Great Peconic Bay
+    sources:
+      - url: https://peconicgoldoysters.com/
+        label: Peconic Gold Oysters — official site, homepage
+        accessed: 2026-11-21
+species:
+  - Crassostrea virginica
+waterbody: Great Peconic Bay
+town: Southold
+hamlet: Cutchogue
+region: North Fork
+address: 21125 County Road 48, Cutchogue, NY 11935
+website: https://peconicgoldoysters.com/
+phone: '631-495-7061'
+email: matt@peconicgoldoysters.com
+instagram: peconicgoldoysters
+facebook: peconicgoldoysters
+sells_direct: true
+description: >-
+  A Cutchogue farm growing oysters by hand in the Great Peconic Bay and selling
+  them from a self-serve roadside stand on County Road 48, where a bag of two
+  dozen sits alongside shucking knives and payment works on the honour system.
+  The farm runs two size lines, a smaller classic and a larger one when
+  available, and also sells through an online store. It carries NYS Grown &
+  Certified and a Slow Food East End Snail of Approval.
+leases:
+  - lease_id: 11.03.15.R.W.A
+    lessee: Peconic Gold Oysters Inc.
+    status: Leased
+    term: 1/1/2023 - 12/31/2032
+    source:
+      url: https://suffolkcountyny.gov/Departments/Economic-Development-and-Planning/Planning-and-Environment/Environmental-Planning-and-Aquaculture/Aquaculture-Lease-Program/Inventory-of-Current-Leases
+      label: Suffolk County Aquaculture Lease Program — inventory of current leases
+      accessed: 2026-11-21
+sources:
+  - url: https://peconicgoldoysters.com/
+    label: Peconic Gold Oysters — official site, homepage
+    accessed: 2026-11-21
+  - url: https://suffolkcountyny.gov/Departments/Economic-Development-and-Planning/Planning-and-Environment/Environmental-Planning-and-Aquaculture/Aquaculture-Lease-Program/Inventory-of-Current-Leases
+    label: Suffolk County Aquaculture Lease Program — inventory of current leases
+    accessed: 2026-11-21
+last_verified: 2026-11-21
+verification_notes: >-
+  Open: wholesale, tours, shipping and farming method are not stated on the
+  homepage; sub-pages (/ourfarm, /our-process, /events) were not read. No geo
+  is set — the farmstand street address is published, but it has not been
+  geocoded from a source we control, and the ALP lease centroid describes a
+  water lease site rather than the stand. The footer misspells the hamlet as
+  "Cutghogue"; the correct spelling Cutchogue is used here. Two further
+  published addresses (billing, events contacts) were not recorded as they are
+  staff emails rather than business facts.
+claimed: false
+featured: false

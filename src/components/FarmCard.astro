@@ -1,0 +1,62 @@
+---
+import type { FarmIndexRow } from '../lib/farms';
+import { isStale } from '../lib/farms';
+
+interface Props {
+  farm: FarmIndexRow;
+}
+const { farm } = Astro.props;
+
+const place = [farm.hamlet || farm.town, farm.waterbody].filter(Boolean).join(' · ');
+const flags = [
+  farm.sells_direct && 'Sells direct',
+  farm.offers_tours && 'Tours',
+  farm.ships && 'Ships',
+  farm.sells_wholesale && 'Wholesale',
+  farm.csa && 'Subscription',
+].filter(Boolean) as string[];
+---
+
+<article
+  class="border-navy-200 bg-salt-50 hover:border-brass-400 rounded border p-4 transition-colors"
+  data-farm
+  data-region={farm.region}
+  data-waterbody={farm.waterbody}
+  data-town={farm.town}
+  data-type={farm.type.join('|')}
+  data-direct={String(farm.sells_direct)}
+  data-tours={String(farm.offers_tours)}
+  data-ships={String(farm.ships)}
+  data-name={farm.name.toLowerCase()}
+  data-verified={farm.last_verified}
+  data-text={farm.text}
+>
+  <h3 class="font-display text-xl">
+    <a href={farm.url} class="text-navy-900">
+      {farm.name}
+    </a>
+  </h3>
+
+  {place && <p class="text-shell-600 mt-1 text-sm">{place}</p>}
+
+  {farm.brands.length > 0 && (
+    <p class="mt-2 text-sm">
+      <span class="text-shell-600">Oysters:</span> {farm.brands.join(', ')}
+    </p>
+  )}
+
+  <ul class="mt-3 flex flex-wrap gap-1.5">
+    {farm.type.map((t) => (
+      <li class="border-navy-300 text-navy-700 rounded-full border px-2 py-0.5 text-xs capitalize">
+        {t}
+      </li>
+    ))}
+    {flags.map((f) => (
+      <li class="bg-navy-700 text-salt-50 rounded-full px-2 py-0.5 text-xs">{f}</li>
+    ))}
+  </ul>
+
+  {isStale(farm.last_verified) && (
+    <p class="text-navy-600 mt-3 text-xs">Listing due for re-verification</p>
+  )}
+</article>

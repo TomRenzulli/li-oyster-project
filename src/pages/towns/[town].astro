@@ -1,0 +1,45 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TaxonomyPage from '../../components/TaxonomyPage.astro';
+import { getListedFarms, slugify, facetCounts } from '../../lib/farms';
+
+export const getStaticPaths = (async () => {
+  const farms = await getListedFarms();
+  return facetCounts(farms, (f) => f.data.town).map(({ value }) => ({
+    params: { town: slugify(value) },
+    props: { town: value, farms: farms.filter((f) => f.data.town === value) },
+  }));
+}) satisfies GetStaticPaths;
+
+const { town, farms } = Astro.props;
+
+const waters = [...new Set(farms.map((f) => f.data.waterbody).filter(Boolean))];
+const hamlets = [...new Set(farms.map((f) => f.data.hamlet).filter(Boolean))];
+const direct = farms.filter((f) => f.data.sells_direct === true).length;
+
+const intro = [
+  `${farms.length} verified oyster operation${farms.length === 1 ? '' : 's'} in this directory sit${farms.length === 1 ? 's' : ''} in the Town of ${town}`,
+  waters.length ? `, working ${waters.join(' and ')}` : '',
+  hamlets.length ? `, out of ${hamlets.join(' and ')}` : '',
+  '. ',
+  direct > 0
+    ? `${direct} of them sell${direct === 1 ? 's' : ''} directly to the public, so check the listing before you drive. `
+    : '',
+  'Town boundaries on the East End are large and cover several hamlets, so the hamlet is often the more useful detail.',
+].join('');
+---
+
+<BaseLayout
+  title={`Oyster farms in the Town of ${town}`}
+  description={`Verified oyster farms, hatcheries and growers in the Town of ${town}, Long Island, each with cited sources.`}
+>
+  <TaxonomyPage
+    kind="town"
+    value={town}
+    farms={farms}
+    intro={intro}
+    parentLabel="Towns"
+    parentHref="/towns/"
+  />
+</BaseLayout>
