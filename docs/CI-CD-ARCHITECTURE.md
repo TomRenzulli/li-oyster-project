@@ -81,8 +81,10 @@ the real deployment is better in principle — real CDN, real compression, real 
 that was the original design. It does not work with Cloudflare's native Git integration.
 Cloudflare reports builds to GitHub as **check runs and PR comments only**; it creates no
 GitHub Deployment object, so the `deployment_status` event never fires and there is nothing to
-trigger on. Verified 2026-11-22: `GET /repos/TomRenzulli/li-oyster-project/deployments` is
-empty despite completed Cloudflare builds. The alternative — scraping the preview URL out of a
+trigger on. **Confirmed 2026-11-22 against a real, successful Cloudflare Pages deployment of
+this repo:** `GET /repos/TomRenzulli/li-oyster-project/deployments` returned `0`. This is no
+longer an inference from the Workers build — it is measured on the exact integration we
+deploy with. The alternative — scraping the preview URL out of a
 check run's human-readable summary — is too fragile to hang a release gate on.
 
 So the gate moved to where it can actually run on every PR, and the fidelity it loses is

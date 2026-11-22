@@ -8,10 +8,11 @@ name: lighthouse-production
 # Why it is scheduled rather than triggered by the deploy: Cloudflare Pages'
 # native Git integration reports builds to GitHub as *check runs* and PR
 # comments only. It does not create GitHub Deployment objects, so the
-# `deployment_status` event never fires and there is nothing to hook. Verified
-# 2026-11-22: `GET /repos/.../deployments` is empty despite completed
-# Cloudflare builds. Parsing the preview URL out of the check run's human
-# -readable output was the other option and is too fragile to gate on.
+# `deployment_status` event never fires and there is nothing to hook.
+# CONFIRMED 2026-11-22 against a real, SUCCESSFUL Pages deployment of this
+# repo: `GET /repos/.../deployments` returned 0. Parsing the preview URL out of
+# the check run's human-readable summary was the other option and is too
+# fragile to gate on.
 #
 # Consequence worth being honest about: a regression on production is caught
 # within a day, not within a minute. The blocking local audit on every PR is
@@ -28,6 +29,10 @@ on:
         description: 'Origin to audit (no trailing slash)'
         required: false
         default: 'https://longislandoysterfarm.com'
+        type: choice
+        options:
+          - 'https://longislandoysterfarm.com'
+          - 'https://develop.longislandoysterfarm.pages.dev'
 
 permissions:
   contents: read
@@ -48,15 +53,21 @@ jobs:
       - name: Resolve the target
         id: target
         env:
-          # Hard-coded default rather than reading the dispatch input blindly:
-          # workflow_dispatch is restricted to people with write access, but
-          # an audit should still not be pointable at an arbitrary host by
-          # accident. Only the apex and its www alias are accepted.
+          # The dispatch input is a `choice`, so the UI already constrains it,
+          # but the allowlist stays: a choice list is not a security boundary
+          # (the API accepts arbitrary values for a workflow_dispatch input)
+          # and an audit must not be pointable at an arbitrary host.
+          #
+          # develop.<project>.pages.dev is the stable branch-alias URL for the
+          # staging deployment — confirmed to exist 2026-11-22. That makes
+          # staging auditable on demand even though no deploy event fires.
           INPUT_URL: ${{ inputs.url }}
         run: |
           URL="${INPUT_URL:-https://longislandoysterfarm.com}"
           case "$URL" in
-            https://longislandoysterfarm.com|https://www.longislandoysterfarm.com) ;;
+            https://longislandoysterfarm.com) ;;
+            https://www.longislandoysterfarm.com) ;;
+            https://develop.longislandoysterfarm.pages.dev) ;;
             *) echo "::error::Refusing to audit $URL"; exit 1 ;;
           esac
           echo "url=$URL" >> "$GITHUB_OUTPUT"
