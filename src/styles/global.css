@@ -22,6 +22,7 @@
   --color-salt-200: #ecebe3;
   --color-salt-300: #dcd9cc;
 
+  --color-brass-50: #fbf7ec;
   --color-brass-300: #d9b870;
   --color-brass-400: #c79f4b;
   --color-brass-500: #a8822f;
@@ -90,4 +91,65 @@
 
 @utility skip-link {
   @apply bg-navy-800 text-salt-50 absolute left-4 z-50 -translate-y-20 rounded-b px-4 py-2 no-underline transition-transform focus:translate-y-0;
+}
+
+/*
+  Prose styling for MDX guides.
+
+  Deliberately hand-rolled instead of pulling in @tailwindcss/typography. The
+  plugin is good, but it is a dependency whose entire job is a few dozen
+  element rules we can read, and the brief's standard is that every dependency
+  is justified. This is also the only place on the site with long-form body
+  copy, so there is nothing to reuse it on.
+
+  Scoped under .guide-prose so it cannot leak into the directory pages, whose
+  typography is set by utility classes.
+*/
+@utility guide-prose {
+  & > * + * {
+    @apply mt-5;
+  }
+
+  & p,
+  & li {
+    @apply text-navy-800 text-lg leading-relaxed;
+  }
+
+  & h2 {
+    @apply font-display text-navy-900 border-navy-200 mt-12 border-t pt-8 text-2xl;
+  }
+
+  & h3 {
+    @apply font-display text-navy-900 mt-8 text-xl;
+  }
+
+  /* A heading should not sit tight against the rule above it when it is the
+     first element — only when it follows body copy. */
+  & > h2:first-child {
+    @apply mt-0 border-t-0 pt-0;
+  }
+
+  & ul {
+    @apply list-disc space-y-2 pl-6;
+  }
+
+  & ol {
+    @apply list-decimal space-y-2 pl-6;
+  }
+
+  & strong {
+    @apply text-navy-900 font-semibold;
+  }
+
+  & code {
+    @apply bg-navy-50 text-navy-900 rounded px-1.5 py-0.5 text-base;
+  }
+
+  & blockquote {
+    @apply border-brass-400 text-navy-700 border-l-4 pl-4 italic;
+  }
+
+  & hr {
+    @apply border-navy-200 my-10;
+  }
 }

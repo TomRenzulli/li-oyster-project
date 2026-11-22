@@ -1,0 +1,199 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import { getEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import FarmCard from '../../components/FarmCard.astro';
+import { getPublishedGuides, resolveRelated, daysSinceVerified, isStale } from '../../lib/guides';
+import { toIndexRow } from '../../lib/farms';
+
+export const getStaticPaths = (async () => {
+  const guides = await getPublishedGuides();
+  return guides.map((guide) => ({ params: { slug: guide.id }, props: { guide } }));
+}) satisfies GetStaticPaths;
+
+const { guide } = Astro.props;
+const { Content } = await render(guide);
+const related = await resolveRelated(guide);
+
+// FarmCard renders a FarmIndexRow, not a raw collection entry, so the same
+// card markup is shared with the directory rather than reimplemented here.
+const relatedFarms = (await Promise.all(guide.data.related_farms.map((ref) => getEntry(ref))))
+  .filter((farm) => farm !== undefined)
+  .map((farm) => toIndexRow(farm));
+
+const canonical = new URL(`/guides/${guide.id}/`, Astro.site).href;
+const stale = isStale(guide.data.last_verified);
+
+// Article rather than HowTo. HowTo demands a machine-readable step list, and
+// writing one that does not match the prose would be a structured-data lie
+// for a rich result we do not need.
+const article = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: guide.data.title,
+  description: guide.data.summary,
+  datePublished: guide.data.published,
+  dateModified: guide.data.last_verified,
+  url: canonical,
+  isAccessibleForFree: true,
+  publisher: {
+    '@type': 'Organization',
+    name: 'Long Island Oyster Farm',
+    url: Astro.site?.href,
+  },
+  // Every authority cited, so the claim that this page is sourced is itself
+  // machine-checkable rather than a badge we drew.
+  citation: [...guide.data.authorities, ...guide.data.sources].map((s) => ({
+    '@type': 'CreativeWork',
+    name: s.label,
+    url: s.url,
+  })),
+};
+
+const breadcrumbs = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Guides',
+      item: new URL('/guides/', Astro.site).href,
+    },
+    { '@type': 'ListItem', position: 2, name: guide.data.title, item: canonical },
+  ],
+};
+---
+
+<BaseLayout
+  title={guide.data.title}
+  description={guide.data.summary}
+  ogRoute={`guides/${guide.id}`}
+>
+  <JsonLd schema={[article, breadcrumbs]} />
+
+  <nav aria-label="Breadcrumb" class="text-navy-600 text-sm">
+    <a href="/guides/">Guides</a>
+  </nav>
+
+  <article class="mt-4">
+    <header>
+      <h1 class="font-display text-navy-900 text-4xl">{guide.data.title}</h1>
+      <p class="text-navy-700 mt-4 max-w-prose text-lg">{guide.data.summary}</p>
+      <p class="text-navy-500 mt-4 text-sm">
+        Published <time datetime={guide.data.published}>{guide.data.published}</time> · facts last
+        checked <time datetime={guide.data.last_verified}>{guide.data.last_verified}</time>(
+        {daysSinceVerified(guide.data.last_verified)} days ago)
+      </p>
+      {stale && (
+        <p class="border-brass-400 bg-brass-50 text-navy-800 mt-4 max-w-prose border-l-4 p-3 text-sm">
+          This guide has not been re-checked against its sources recently. Agency guidance changes;
+          follow the links at the bottom to the current version before relying on anything here.
+        </p>
+      )}
+    </header>
+
+    {guide.data.health_claims && (
+      <aside
+        class="border-navy-700 bg-navy-50 text-navy-900 mt-8 max-w-prose border-l-4 p-4 text-sm"
+        aria-label="Health information notice"
+      >
+        <p class="font-semibold">This page gives food-safety information.</p>
+        <p class="mt-2">
+          We are an oyster directory, not a medical or public-health authority. Everything here
+          about risk is quoted from the agencies listed at the bottom of the page, with links. Where
+          they do not answer a question, we say so instead of filling the gap. For personal medical
+          advice, ask a clinician.
+        </p>
+      </aside>
+    )}
+
+    <div class="guide-prose mt-10 max-w-prose">
+      <Content />
+    </div>
+  </article>
+
+  {guide.data.unsourced_questions.length > 0 && (
+    <section class="border-navy-200 mt-14 max-w-prose border-t pt-8">
+      <h2 class="font-display text-navy-900 text-2xl">What this guide does not answer</h2>
+      <p class="text-navy-700 mt-3 text-sm">
+        Open questions we could not source. Published here rather than quietly omitted, because an
+        unmarked gap is how a guess gets written in later.
+      </p>
+      <ul class="text-navy-700 mt-4 list-disc space-y-3 pl-5">
+        {guide.data.unsourced_questions.map((question) => (
+          <li>{question}</li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {guide.data.authorities.length > 0 && (
+    <section class="mt-14 max-w-prose">
+      <h2 class="font-display text-navy-900 text-2xl">Authorities cited</h2>
+      <ul class="mt-4 space-y-3">
+        {guide.data.authorities.map((authority) => (
+          <li class="text-sm">
+            <span class="bg-navy-800 text-salt-50 mr-2 rounded px-2 py-0.5 text-xs">
+              {authority.body}
+            </span>
+            <a href={authority.url} rel="noopener">
+              {authority.label}
+            </a>
+            <span class="text-navy-500"> — read {authority.accessed}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {guide.data.sources.length > 0 && (
+    <section class="mt-10 max-w-prose">
+      <h2 class="font-display text-navy-900 text-2xl">Other sources</h2>
+      <ul class="mt-4 space-y-3">
+        {guide.data.sources.map((source) => (
+          <li class="text-sm">
+            <a href={source.url} rel="noopener">
+              {source.label}
+            </a>
+            <span class="text-navy-500"> — read {source.accessed}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {relatedFarms.length > 0 && (
+    <section class="mt-14">
+      <h2 class="font-display text-navy-900 text-2xl">Farms mentioned</h2>
+      <ul class="mt-4 grid gap-4 sm:grid-cols-2">
+        {relatedFarms.map((farm) => (
+          <li>
+            <FarmCard farm={farm} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {related.length > 0 && (
+    <section class="border-navy-200 mt-14 border-t pt-8">
+      <h2 class="font-display text-navy-900 text-2xl">Read next</h2>
+      <ul class="mt-4 space-y-3">
+        {related.map((other) => (
+          <li>
+            <a href={`/guides/${other.id}/`}>{other.data.title}</a>
+            <p class="text-navy-600 mt-1 max-w-prose text-sm">{other.data.summary}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <p class="text-navy-600 mt-14 text-sm">
+    Something here wrong or out of date? <a href="/about/">Tell us</a> and we will fix or pull it.
+    Looking for a farm? <a href="/farms/">The directory</a>.
+  </p>
+</BaseLayout>

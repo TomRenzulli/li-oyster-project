@@ -111,3 +111,78 @@ the stand. The site's own footer misspells the hamlet ("Cutghogue"); listing use
 - **Lease PDF vs feature service.** The 2026-08-13 inventory PDF and the live GIS feature
   service do not contain an identical set of lessees. Reconcile them and document which is
   authoritative for which field.
+
+## 7. Guides drafted but not published (Phase 3)
+
+Six guides were planned. **Two are published** (`raw-oysters-and-vibrio`,
+`shucking-safely`), because CDC and FDA pages supplied quotable, attributable text for every
+factual claim in them. The other four are **not published**, because publishing them would
+have meant asserting things we could not source. Each one below lists the specific facts that
+are missing — the point of writing them down is that a gap recorded here does not quietly
+become a guess in a later edit.
+
+Two sources we wanted and could not read, which affect several of these:
+
+- **NYS Department of Health vibriosis pages** (`health.ny.gov/diseases/communicable/
+vibriosis/`) returned HTTP 403 to every automated fetch. This is the New York-specific
+  advisory and the one that would state NY months and NY risk-group language. Needs a manual
+  read by a human in a browser.
+- **NYS DEC shellfishing pages** have moved; the current paths are
+  `dec.ny.gov/things-to-do/shellfishing/closures` and
+  `dec.ny.gov/things-to-do/shellfishing/regulatory-changes-for-harvest-areas`. Not yet read in
+  full.
+
+### 7.1 Storing and preserving live oysters
+
+**Missing:** every specific storage instruction. The FDA's general seafood guidance gives
+"40 °F or below" for use within two days and the tap test, and that is all we have from an
+official source. **Unsourced:** cup-side-down storage, damp cloth vs sealed container, never
+submerging in fresh water, how many days live oysters actually keep, and any sign of a dead
+oyster beyond the tap test. All of this is widespread received wisdom and is probably correct,
+which is exactly why it is dangerous to assert — needs a university extension or state
+shellfish-program publication.
+
+### 7.2 Long Island seasons and merroir by waterbody
+
+**Missing:** essentially all of it, and this is the guide with the highest fabrication risk on
+the whole site. Per-waterbody flavour claims ("Peconic is sweeter", "Blue Point is brinier")
+are repeated endlessly in press and by growers, but we have no source that is both
+authoritative and specific enough to attribute. **Unsourced:** spawning timing in LI waters,
+how spawning affects texture, salinity ranges by bay, and any claim that one bay tastes
+different from another. Candidate sources: NY Sea Grant, Cornell Cooperative Extension Suffolk,
+peer-reviewed work on Peconic/Great South Bay salinity. **Do not write this guide from
+tasting notes.**
+
+### 7.3 Hosting an oyster party
+
+**Missing:** quantities per person, ice/handling logistics, and timing. Low stakes compared to
+the rest — nothing here is a health claim — but "a dozen per person" is still a factual claim
+and the safety-adjacent parts (how long a shucked tray can sit out, holding temperature) are
+not. Needs the FDA time/temperature guidance for shucked shellfish held for service, which we
+have not yet located.
+
+### 7.4 Restoration and the bays
+
+**Missing:** the programs themselves. Every URL we guessed for the operators 404'd, so we have
+**not confirmed the official name, operator, waterbodies or public-participation route** for
+any Long Island restoration program. Specifically unresolved:
+
+- **CCE Suffolk "SPAT"** — two conflicting expansions of the acronym appear on CCE's own
+  pages, and two different street numbers for the same facility (3690 vs 3960 Cedar Beach
+  Road). Neither is settled. This duplicates item 4 above; it blocks both a listing and this
+  guide.
+- **Shinnecock Bay restoration (Stony Brook)** — the program is real and widely covered, but
+  `stonybrook.edu/shinnecock-bay/` 404s and we have not found the current official page, so
+  the program's exact name and scope are unconfirmed.
+- **Town-level programs** (Islip, Brookhaven, Oyster Bay, Huntington) — unresearched.
+
+Writing a restoration guide that misnames a program or credits the wrong organisation would be
+worse than not having one, because the organisations involved are the people most likely to
+read it.
+
+## 8. Not a data gap, but blocking a Phase 3 feature
+
+- **Email signup provider.** The brief asks for a double opt-in email signup. No candidate's
+  double opt-in behaviour has been confirmed in vendor documentation, and the provider choice
+  is the owner's. **Nothing was built**, rather than wiring a provider and assuming its
+  confirmation flow. See `docs/PLAN.md` §6.
