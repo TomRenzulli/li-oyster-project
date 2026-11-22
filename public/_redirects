@@ -1,0 +1,6 @@
+# Slug changes and retired URLs go here as 301s. Keep them forever; a 404 on a
+# URL a farm has printed on a sign is a real cost.
+#
+# NOTE: www -> apex is NOT handled here. Cloudflare Pages _redirects cannot
+# match on hostname. That redirect is a Cloudflare Redirect Rule on the zone;
+# see docs/DEPLOY.md.
