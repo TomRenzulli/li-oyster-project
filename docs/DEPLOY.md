@@ -62,6 +62,27 @@ revoke the token in Cloudflare. See [GITHUB_SECRETS.md](GITHUB_SECRETS.md).
 Pages project → **Settings → Builds & deployments → Production branch** → `main`. Every other
 branch, including `develop`, then deploys as a preview. That is what makes `develop` staging.
 
+### 3b. Remove the GoDaddy Website Builder site first
+
+**This is the step that actually blocks the cutover, and it is on the GoDaddy side, not
+Cloudflare's.**
+
+Symptom: the apex and `www` both resolve to a Cloudflare proxy IP, yet serve a GoDaddy
+Website Builder site. The giveaways in the response are `x-siteid: us-east-1`, a
+`dps_site_id` cookie, preload links to `img1.wsimg.com`, and a `Content-Security-Policy`
+listing `godaddy.com` and `secureserver.net` in `frame-ancestors`. `server: cloudflare` is
+_not_ evidence the origin is ours — Cloudflare will happily proxy someone else's origin.
+
+So: in the **GoDaddy** account, disconnect the Websites + Marketing / Website Builder site
+from `longislandoysterfarm.com`. Until that is done, deleting the DNS records in Cloudflare
+may not stick — the zone advertises Domain Connect
+(`_domainconnect` TXT → `api.cloudflare.com/client/v4/dns/domainconnect`), which is the
+mechanism that lets an external service write records into this zone programmatically.
+
+Then, in Cloudflare DNS, delete **both** the apex record and the `www` record if they point at
+GoDaddy, and check **Rules** (Page Rules, Origin Rules, Redirect Rules) for anything matching
+the apex.
+
 ### 4. Attach the apex domain
 
 Pages project → **Custom domains → Set up a custom domain** → `longislandoysterfarm.com`.
@@ -77,6 +98,11 @@ custom domain shows **Active** when it is done.
 ### 5. Attach `www` and redirect it to the apex
 
 Two parts. Both are needed — the second one is the part people forget.
+
+> **Note:** before the cutover, `www` already returned a 301 to the apex, but that redirect was
+> **GoDaddy's**, not ours — the 301 response carried `x-siteid: us-east-1`. It disappears with
+> the Website Builder site, so the Redirect Rule below is genuinely required rather than
+> already satisfied.
 
 **a. Add the hostname** so the certificate covers it: Pages project → Custom domains → add
 `www.longislandoysterfarm.com`. Cloudflare adds the DNS record.
