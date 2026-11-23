@@ -94,15 +94,73 @@ Cloudflare zones by default and is not by itself evidence of an active integrati
 
 ### 4. Attach the apex domain
 
-Pages project → **Custom domains → Set up a custom domain** → `longislandoysterfarm.com`.
+The dashboard's navigation has been reorganised more than once, and Cloudflare's own docs lag
+it, so two routes are given here. **Prefer the API** — it is stable, it is scriptable, and it
+does not depend on a menu label.
 
-Because the zone is already on Cloudflare DNS, Cloudflare creates the record itself: a `CNAME`
-for the apex, flattened automatically at the edge. Accept it. Remove any pre-existing `A`,
-`AAAA` or `CNAME` record for the apex that points somewhere else, or the domain will stay in
-"pending" or serve the wrong origin.
+#### Via the API (recommended)
 
-Wait for the certificate. It is usually a couple of minutes and occasionally up to ~15. The
-custom domain shows **Active** when it is done.
+```bash
+# Run this in your own terminal, not through the agent, so the token is not
+# captured anywhere. Create a token scoped to Account -> Cloudflare Pages ->
+# Edit, use it, then revoke it. It is NOT a repo secret and must never become
+# one: this project deliberately holds no Cloudflare credential.
+export CF_TOKEN='...'
+ACCOUNT=d1de92cf166d53190720d66ce207a1e1
+PROJECT=longislandoysterfarm
+
+for DOMAIN in longislandoysterfarm.com www.longislandoysterfarm.com; do
+  curl -sS -X POST \
+    "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/pages/projects/$PROJECT/domains" \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: Bearer $CF_TOKEN" \
+    --data "$(printf '{"name":"%s"}' "$DOMAIN")"
+  echo
+done
+```
+
+Needs the **Pages Write** permission. To list what is attached, `GET` the same path; to retry a
+domain stuck validating, `PATCH .../domains/<domain>`; to remove one, `DELETE` it.
+
+#### Via the dashboard
+
+A deep link avoids the sidebar entirely:
+`https://dash.cloudflare.com/d1de92cf166d53190720d66ce207a1e1/pages/view/longislandoysterfarm`
+→ **Custom domains**. In the current UI this tab may sit under the project's **Settings**
+rather than at the top level. The button has been labelled "Set up a domain" and "Setup a
+custom domain" in different places; the branch-alias flow adds an **Activate domain**
+confirmation step that the main flow does not.
+
+#### Either way
+
+The apex must be a zone on the **same Cloudflare account** as the Pages project. It is.
+
+Because the zone is on Cloudflare DNS, Cloudflare creates the record itself — a `CNAME` for the
+apex, flattened at the edge. **Delete any pre-existing `A`, `AAAA` or `CNAME` for the apex
+first.** Cloudflare's docs do not say how a conflicting record is handled, and the observed
+behaviour on this zone was that the custom domain simply never provisioned: the GoDaddy `A`
+record kept answering, and deleting it afterwards left the apex with no records at all.
+
+Do not hand-create a `CNAME` to `<project>.pages.dev` _before_ attaching the domain in Pages.
+Cloudflare warns this makes the domain fail to resolve and serve a **522**.
+
+Then verify from outside the dashboard, which is the only check that cannot lie:
+
+```bash
+dig +short CNAME longislandoysterfarm.com      # should return a Cloudflare target
+curl -sI https://longislandoysterfarm.com/ | grep -i content-security-policy
+```
+
+The CSP should be ours (`default-src 'none'; script-src 'self' …`). If it names `godaddy.com`
+in `frame-ancestors`, the apex is still pointed at GoDaddy. Certificate provisioning is usually
+a couple of minutes, occasionally up to ~15.
+
+#### CAA records
+
+If the zone has `CAA` records, they must permit Cloudflare's issuers or the certificate cannot
+be issued: **Let's Encrypt**, **Google Trust Services (`pki.goog`)** and **`ssl.com`**. This
+zone has no `CAA` records today, so there is nothing to do — but it is the first thing to check
+if a domain sits in pending with DNS that looks correct.
 
 ### 5. Attach `www` and redirect it to the apex
 
