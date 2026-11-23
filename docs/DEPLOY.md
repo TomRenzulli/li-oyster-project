@@ -144,16 +144,42 @@ record kept answering, and deleting it afterwards left the apex with no records 
 Do not hand-create a `CNAME` to `<project>.pages.dev` _before_ attaching the domain in Pages.
 Cloudflare warns this makes the domain fail to resolve and serve a **522**.
 
-Then verify from outside the dashboard, which is the only check that cannot lie:
+Then verify from outside the dashboard:
 
 ```bash
-dig +short CNAME longislandoysterfarm.com      # should return a Cloudflare target
-curl -sI https://longislandoysterfarm.com/ | grep -i content-security-policy
+curl -sI https://longislandoysterfarm.com/ | grep -iE '^HTTP/|content-security-policy'
 ```
 
-The CSP should be ours (`default-src 'none'; script-src 'self' …`). If it names `godaddy.com`
-in `frame-ancestors`, the apex is still pointed at GoDaddy. Certificate provisioning is usually
-a couple of minutes, occasionally up to ~15.
+The CSP should be ours — `default-src 'none'; script-src 'self' …`. Certificate provisioning is
+usually a couple of minutes, occasionally up to ~15.
+
+**Do not use `dig CNAME` to check this.** A _proxied_ Cloudflare record is CNAME-flattened, so
+an external `dig +short CNAME` returns **nothing** and `dig +short A` returns Cloudflare anycast
+addresses — whether the record points at Pages, at GoDaddy, or at nothing reachable at all. DNS
+cannot distinguish those cases. **Only the HTTP response can.** Read the status line and the
+headers:
+
+| Response                                     | Means                                                     |
+| -------------------------------------------- | --------------------------------------------------------- |
+| Our CSP (`default-src 'none'`)               | Working                                                   |
+| **522**                                      | Record exists, but **no Pages project owns the hostname** |
+| **530** (error 1016)                         | Record points at an origin that no longer resolves        |
+| CSP naming `godaddy.com` / `x-siteid` header | Still pointed at GoDaddy                                  |
+| Cannot resolve host                          | No record at all                                          |
+
+### If you get a 522
+
+This is the documented failure for adding the `CNAME` to `<project>.pages.dev` **by hand
+without associating the domain in the Pages project first.** The record shape is right; nothing
+is routing the hostname to the project, so Cloudflare tries to reach a real origin and times
+out.
+
+Recovery, in this order — it matters, because a pre-existing record was separately observed to
+make attachment silently never provision:
+
+1. Delete the apex and `www` records in Cloudflare DNS.
+2. Attach both domains in the Pages project (API call above).
+3. Let Cloudflare create the records itself.
 
 #### CAA records
 
