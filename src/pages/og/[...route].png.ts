@@ -1,6 +1,7 @@
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { renderOgImage, type OgOptions } from '../../lib/og';
 import { getAllFarms, getBrands, slugify } from '../../lib/farms';
+import { getPublishedGuides } from '../../lib/guides';
 
 /**
  * One PNG per page that needs a social card, generated at build time.
@@ -9,6 +10,7 @@ import { getAllFarms, getBrands, slugify } from '../../lib/farms';
 export const getStaticPaths = (async () => {
   const farms = await getAllFarms();
   const brands = await getBrands();
+  const guides = await getPublishedGuides();
 
   const paths: { params: { route: string }; props: OgOptions }[] = [
     {
@@ -42,7 +44,26 @@ export const getStaticPaths = (async () => {
         subtitle: 'Verified locations only',
       },
     },
+    {
+      params: { route: 'guides' },
+      props: {
+        eyebrow: 'Guides',
+        title: 'Buying, keeping and opening oysters',
+        subtitle: 'Every factual claim cited to its source',
+      },
+    },
   ];
+
+  for (const guide of guides) {
+    paths.push({
+      params: { route: `guides/${guide.id}` },
+      props: {
+        eyebrow: guide.data.health_claims ? 'Guide · food safety' : 'Guide',
+        title: guide.data.title,
+        subtitle: `Checked ${guide.data.last_verified}`,
+      },
+    });
+  }
 
   for (const farm of farms) {
     paths.push({

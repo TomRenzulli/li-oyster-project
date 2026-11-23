@@ -169,4 +169,112 @@ const farms = defineCollection({
     }),
 });
 
-export const collections = { farms };
+/**
+ * The guides collection.
+ *
+ * The no-fabrication rule is usually discussed in terms of listings, but prose
+ * is where it is easiest to break. A guide is original writing, yet the moment
+ * it states a temperature, a month, a regulation or a health risk it is making
+ * a factual claim, and "it sounds right" is how a food-safety error gets
+ * published. So guides carry the same `sources` and `last_verified` burden a
+ * listing does.
+ *
+ * Two fields exist specifically to keep us honest about what we have not
+ * sourced:
+ *   - `health_claims`: set it when the guide gives food-safety or medical
+ *     guidance. A superRefine then requires `authorities`, so such a guide
+ *     cannot be published citing only a blog.
+ *   - `unsourced_questions`: the things this guide deliberately does NOT
+ *     answer, rendered on the page. Saying "we don't know yet" in public is
+ *     cheaper than being wrong, and it stops a gap quietly becoming a guess
+ *     in a later edit.
+ */
+const guides = defineCollection({
+  loader: glob({ pattern: '**/*.mdx', base: './src/content/guides' }),
+  schema: z
+    .object({
+      title: z.string().min(8),
+      /** One sentence. Used for <meta description> and the index card. */
+      summary: z.string().min(40).max(300),
+
+      /**
+       * Ordering on /guides/. Explicit so the index is editorial rather than
+       * alphabetical-by-accident.
+       */
+      order: z.number().int().min(0),
+
+      published: isoDate,
+      last_verified: isoDate,
+
+      /**
+       * Does this guide give food-safety or health guidance? If so the
+       * superRefine below requires at least one `authorities` entry.
+       */
+      health_claims: z.boolean().default(false),
+
+      /**
+       * Citations to a government or public-health body specifically. Kept
+       * separate from `sources` so the distinction is enforceable: a guide
+       * that tells someone what is safe to eat must point at an authority,
+       * not at us.
+       */
+      authorities: z
+        .array(
+          source.extend({
+            /** e.g. "CDC", "FDA", "NYS DOH", "NYS DEC". */
+            body: z.string().min(2),
+          }),
+        )
+        .default([]),
+
+      sources: z.array(source).default([]),
+
+      /** Rendered on the page. See the note above. */
+      unsourced_questions: z.array(z.string().min(10)).default([]),
+
+      /** Related directory entries, if any. Validated against the collection. */
+      related_farms: z.array(reference('farms')).default([]),
+
+      /** Other guides worth reading next. Slugs, checked by check:links. */
+      related_guides: z.array(z.string()).default([]),
+
+      /** Suppresses the page from /guides/ and from the sitemap. */
+      draft: z.boolean().default(false),
+    })
+    .strict()
+    .superRefine((guide, ctx) => {
+      const today = new Date().toISOString().slice(0, 10);
+      if (String(guide.last_verified) > today) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['last_verified'],
+          message: 'last_verified is in the future.',
+        });
+      }
+      if (String(guide.published) > today) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['published'],
+          message: 'published is in the future.',
+        });
+      }
+      if (guide.health_claims && guide.authorities.length === 0) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['authorities'],
+          message:
+            'A guide with health_claims must cite at least one public-health authority. ' +
+            'Telling someone what is safe to eat on our own say-so is not acceptable.',
+        });
+      }
+      if (!guide.health_claims && guide.sources.length === 0 && guide.authorities.length === 0) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['sources'],
+          message: 'A guide needs at least one source or authority.',
+        });
+      }
+    }),
+});
+
+export const collections = { farms, guides };

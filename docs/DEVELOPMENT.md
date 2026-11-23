@@ -61,6 +61,30 @@ PR forever. The bar: does this do something we cannot do in twenty lines of our 
 Contact fields (`address`, `phone`, `email`, `geo`) require a source accessed within 12 months.
 `geo` requires `geo_precision`. These are enforced, not suggested.
 
+## Writing a guide (from Phase 3)
+
+Guides are MDX in `src/content/guides/`, one file per guide, filename = URL slug.
+
+1. Copy the frontmatter shape from an existing guide. `title`, `summary`, `order`, `published`,
+   `last_verified` are required.
+2. **Decide `health_claims` honestly.** Set it to `true` if the guide tells anyone what is or
+   is not safe to eat, handle or do. If it is `true`, you must list at least one `authorities`
+   entry with a `body` (CDC, FDA, NYS DOH, NYS DEC). The schema and `verify:data` both refuse
+   the build otherwise, on purpose.
+3. **Quote, don't paraphrase, the risky parts.** For anything a reader might act on — a
+   temperature, a time, a risk group, a regulation — use the agency's own words and link the
+   page you read. Paraphrasing a safety instruction is how it drifts.
+4. **Write what you could not source into `unsourced_questions`.** It renders on the page.
+   This is not an admission of weakness; it is the mechanism that stops the gap becoming a
+   guess when someone edits the page in six months.
+5. If the guide is not fully sourced, set `draft: true` and add an entry to
+   `data/NEEDS_VERIFICATION.md` saying exactly which facts are missing. A half-sourced guide
+   does not ship.
+6. `npm run verify:data && npm run build && npm run check:links`.
+
+The rule to keep in mind: a guide is our writing, but its _facts_ are not ours. If you cannot
+point at who said it, don't say it.
+
 ## Changing the CSP
 
 `public/_headers`. Add an origin only in the PR of the feature that needs it, with a one-line

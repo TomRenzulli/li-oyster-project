@@ -23,9 +23,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-env:
-  NODE_VERSION: '24'
-
 jobs:
   secrets:
     name: Secret scan (TruffleHog)
@@ -84,7 +81,10 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          # Single source of truth, shared with Cloudflare Pages: Pages reads
+          # .node-version too, so CI and the host provably agree. Pages does
+          # NOT read package.json "engines", so that field cannot serve here.
+          node-version-file: .node-version
           cache: npm
       - run: npm ci
       - name: ESLint
@@ -108,7 +108,10 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          # Single source of truth, shared with Cloudflare Pages: Pages reads
+          # .node-version too, so CI and the host provably agree. Pages does
+          # NOT read package.json "engines", so that field cannot serve here.
+          node-version-file: .node-version
           cache: npm
       - run: npm ci
       - run: npm run build
@@ -146,7 +149,10 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          # Single source of truth, shared with Cloudflare Pages: Pages reads
+          # .node-version too, so CI and the host provably agree. Pages does
+          # NOT read package.json "engines", so that field cannot serve here.
+          node-version-file: .node-version
           cache: npm
       - run: npm ci
       - run: npm run build

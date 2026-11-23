@@ -81,8 +81,10 @@ the real deployment is better in principle — real CDN, real compression, real 
 that was the original design. It does not work with Cloudflare's native Git integration.
 Cloudflare reports builds to GitHub as **check runs and PR comments only**; it creates no
 GitHub Deployment object, so the `deployment_status` event never fires and there is nothing to
-trigger on. Verified 2026-11-22: `GET /repos/TomRenzulli/li-oyster-project/deployments` is
-empty despite completed Cloudflare builds. The alternative — scraping the preview URL out of a
+trigger on. **Confirmed 2026-11-22 against a real, successful Cloudflare Pages deployment of
+this repo:** `GET /repos/TomRenzulli/li-oyster-project/deployments` returned `0`. This is no
+longer an inference from the Workers build — it is measured on the exact integration we
+deploy with. The alternative — scraping the preview URL out of a
 check run's human-readable summary — is too fragile to hang a release gate on.
 
 So the gate moved to where it can actually run on every PR, and the fidelity it loses is
@@ -137,20 +139,21 @@ pulled in during `npm ci` to steal.
 
 **Applied to both `main` and `develop` (2026-11-21):**
 
-| Rule                      | Setting                                                                                                   |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Pull request required     | Yes, 0 approvals (solo operator; a PR is still a forced pause to read the diff)                           |
-| Required checks           | `Secret scan (TruffleHog)`, `Dependency + filesystem scan (Trivy)`, `Lint, format, types, audit`, `Build` |
-| Branch must be up to date | Yes — a green check on a stale base is not a green check                                                  |
-| Linear history            | Required, which matches the squash-merge workflow                                                         |
-| Force push / deletion     | Blocked                                                                                                   |
-| Conversation resolution   | Required before merge                                                                                     |
-| Applies to admins         | **No** — the owner can push directly in an emergency                                                      |
+| Rule                      | Setting                                                                                                                            |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Pull request required     | Yes, 0 approvals (solo operator; a PR is still a forced pause to read the diff)                                                    |
+| Required checks           | `Secret scan (TruffleHog)`, `Dependency + filesystem scan (Trivy)`, `Lint, format, types, audit`, `Build`, `Lighthouse (95 floor)` |
+| Branch must be up to date | Yes — a green check on a stale base is not a green check                                                                           |
+| Linear history            | Required, which matches the squash-merge workflow                                                                                  |
+| Force push / deletion     | Blocked                                                                                                                            |
+| Conversation resolution   | Required before merge                                                                                                              |
+| Applies to admins         | **No** — the owner can push directly in an emergency                                                                               |
 
-Lighthouse is deliberately **not** a required check: it runs on a deployment event after the
-merge, never on the PR, so requiring it would deadlock every merge. It is a post-merge alarm
-on `develop`, which is what the staging preview is for — a `develop` audit below 95 is fixed
-before the promotion PR into `main` is opened.
+**`Lighthouse (95 floor)` became a required check on 2026-11-22**, once it moved to a local
+audit that runs on every PR. That is the brief's release gate, so it belongs in the required
+set now that it can actually report on a pull request. The separate
+`lighthouse-production.yml` is **not** required and never will be: it runs on a schedule after
+the merge, so requiring it would deadlock every merge.
 
 Admin bypass is a deliberate trade for a one-person project: the gates catch the ordinary
 mistakes, and the owner is not locked out of their own production branch during an incident.
