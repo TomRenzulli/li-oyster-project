@@ -73,15 +73,24 @@ Website Builder site. The giveaways in the response are `x-siteid: us-east-1`, a
 listing `godaddy.com` and `secureserver.net` in `frame-ancestors`. `server: cloudflare` is
 _not_ evidence the origin is ours — Cloudflare will happily proxy someone else's origin.
 
-So: in the **GoDaddy** account, disconnect the Websites + Marketing / Website Builder site
-from `longislandoysterfarm.com`. Until that is done, deleting the DNS records in Cloudflare
-may not stick — the zone advertises Domain Connect
-(`_domainconnect` TXT → `api.cloudflare.com/client/v4/dns/domainconnect`), which is the
-mechanism that lets an external service write records into this zone programmatically.
+Two separate things have to be undone, and doing only one leaves the site still wrong:
 
-Then, in Cloudflare DNS, delete **both** the apex record and the `www` record if they point at
-GoDaddy, and check **Rules** (Page Rules, Origin Rules, Redirect Rules) for anything matching
-the apex.
+1. **In GoDaddy:** remove the Websites + Marketing / Website Builder product from the domain.
+   This removes the _site_.
+2. **In Cloudflare DNS:** delete the `A`/`AAAA` records at the apex **and** at `www`. This
+   removes the _routing_. Deleting the GoDaddy product does **not** remove these — they live in
+   this zone, and while they exist Cloudflare keeps proxying to GoDaddy's origin and the Pages
+   custom domain cannot take the hostname.
+
+Then attach the custom domain (step 4) and let Cloudflare create its own records.
+
+How to tell the records are still there: `dig +short CNAME longislandoysterfarm.com` returns
+nothing while `dig +short A longislandoysterfarm.com` returns Cloudflare proxy addresses. A
+Pages-managed custom domain is a Cloudflare-created record, not a hand-made `A` record.
+
+Only if the records **reappear after deletion** is it worth investigating Domain Connect or a
+connected app writing them back. Note that the `_domainconnect` TXT record is present on
+Cloudflare zones by default and is not by itself evidence of an active integration.
 
 ### 4. Attach the apex domain
 
