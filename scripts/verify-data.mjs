@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 /**
- * Data integrity gate for the farm directory.
+ * Data integrity gate for the farm directory AND the guides.
  *
  * The one rule this project cannot bend: no fabricated data. Every listing
  * must carry at least one source URL and a last_verified date, and any
  * contact-level field (address, phone, email, geo) must be backed by a
  * source accessed within the last 12 months.
+ *
+ * Guides are held to the same standard, because prose is where the rule is
+ * easiest to break: a guide is original writing, but the moment it names a
+ * temperature, a month or a health risk it is making a factual claim. A guide
+ * that sets `health_claims: true` must cite at least one public-health
+ * authority — the schema says so too, and that duplication is the point.
  *
  * This runs in CI and in the pre-commit hook. It intentionally has zero
  * dependencies and parses only the narrow YAML subset the listings use, so
@@ -19,6 +25,7 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const FARMS_DIR = 'src/content/farms';
+const GUIDES_DIR = 'src/content/guides';
 const CONTACT_FIELDS = ['address', 'phone', 'email', 'geo'];
 const SOURCE_MAX_AGE_DAYS = 365;
 const REVERIFY_AFTER_DAYS = 183; // ~6 months, per the launch checklist
@@ -108,11 +115,65 @@ for (const file of files) {
   }
 }
 
+/**
+ * Guides. Reads only the YAML frontmatter block, with the same deliberately
+ * narrow parser: this gate must not share a code path with the Zod schema it
+ * is there to double-check.
+ */
+let guideCount = 0;
+if (existsSync(GUIDES_DIR)) {
+  const guideFiles = readdirSync(GUIDES_DIR).filter((f) => f.endsWith('.mdx') || f.endsWith('.md'));
+  guideCount = guideFiles.length;
+
+  for (const file of guideFiles) {
+    const path = join(GUIDES_DIR, file);
+    const text = readFileSync(path, 'utf8');
+    const fail = (msg) => errors.push(`${path}: ${msg}`);
+
+    const frontmatter = /^---\n([\s\S]*?)\n---/.exec(text)?.[1];
+    if (!frontmatter) {
+      fail('no YAML frontmatter block. A guide with no frontmatter has no sources.');
+      continue;
+    }
+
+    const lastVerified = /^last_verified:\s*["']?(\d{4}-\d{2}-\d{2})/m.exec(frontmatter)?.[1];
+    if (!lastVerified) fail('missing or malformed last_verified (expected YYYY-MM-DD).');
+    else if (daysSince(lastVerified) < 0) fail(`last_verified ${lastVerified} is in the future.`);
+
+    // Count citations by counting URLs inside the authorities/sources blocks.
+    // Crude on purpose: a URL present is the invariant, not its shape.
+    // The `-?` matters: in YAML list form the first key of an item sits after
+    // the dash (`  - url: https://...`), so a pattern anchored on whitespace
+    // alone silently counts zero.
+    const citationUrls = (frontmatter.match(/^\s*-?\s*url:\s*https?:\/\/\S+/gm) ?? []).length;
+    if (citationUrls === 0) {
+      fail('no cited URLs. Original writing still needs sources for its factual claims.');
+    }
+
+    const healthClaims = /^health_claims:\s*true\s*$/m.test(frontmatter);
+    const bodies = (frontmatter.match(/^\s*-?\s*body:\s*\S+/gm) ?? []).length;
+    if (healthClaims && bodies === 0) {
+      fail(
+        'health_claims is true but no `authorities` entry names a body. Telling someone what ' +
+          'is safe to eat on our own say-so is not acceptable.',
+      );
+    }
+
+    if (reportStale && lastVerified && daysSince(lastVerified) > REVERIFY_AFTER_DAYS) {
+      warnings.push(
+        `${path}: last verified ${Math.floor(daysSince(lastVerified))} days ago — due. ` +
+          'Agency guidance changes.',
+      );
+    }
+  }
+}
+
 for (const w of warnings) console.warn(`DUE  ${w}`);
 for (const e of errors) console.error(`FAIL ${e}`);
 
 console.log(
-  `\nverify-data: ${files.length} listing(s) checked, ${errors.length} error(s)` +
+  `\nverify-data: ${files.length} listing(s) and ${guideCount} guide(s) checked, ` +
+    `${errors.length} error(s)` +
     (reportStale ? `, ${warnings.length} due for re-verification` : '') +
     '.',
 );

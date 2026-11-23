@@ -139,3 +139,52 @@ Format: date — decision — why — who decided.
 - **No break-glass `wrangler pages deploy` in the runbook.** Documenting it would require
   minting a Pages:Edit token during an incident, which is when scope discipline is weakest.
   Dashboard rollback plus fix-forward covers the realistic failures. — engineering
+
+## 2026-11-22 (Phase 3)
+
+- **Guides carry the same sourcing burden as listings.** A guide is original writing, but the
+  moment it names a temperature, a month, a regulation or a health risk it is making a factual
+  claim, and "it sounds right" is how a food-safety error gets published. The `guides` schema
+  therefore requires `last_verified` and at least one citation, exactly like a listing. —
+  engineering
+- **`health_claims: true` forces a public-health authority.** Guides declare whether they give
+  food-safety guidance. If they do, a `superRefine` requires at least one `authorities` entry
+  naming a body (CDC, FDA, NYS DOH, NYS DEC). `scripts/verify-data.mjs` enforces the same rule
+  independently. Telling someone what is safe to eat on our own say-so is not acceptable, and
+  that is now a build failure rather than a good intention. Both rules were proven to fail
+  before being committed. — engineering
+- **`unsourced_questions` is rendered on the page, not hidden in a TODO.** Each guide publishes
+  the questions it could not answer. A gap that is written down in public does not quietly
+  become a guess in a later edit, which is the actual failure mode for prose. — engineering
+- **Only two of the six planned guides were published.** `raw-oysters-and-vibrio` and
+  `shucking-safely` had quotable CDC/FDA text for every factual claim. The other four
+  (storage, seasons/merroir, hosting, restoration) did not, and are logged with their specific
+  missing facts in `data/NEEDS_VERIFICATION.md` §7 rather than written from plausible
+  knowledge. The seasons/merroir guide is the highest fabrication risk on the site: per-bay
+  flavour claims are repeated everywhere and attributable nowhere. — engineering
+- **No email signup was built.** The brief asks for double opt-in, the provider choice is the
+  owner's, and no candidate's double opt-in behaviour has been confirmed in vendor
+  documentation. Wiring a provider and assuming its confirmation flow would have been the
+  wrong kind of progress. — deferred to owner
+- **Prose styling is hand-rolled, not `@tailwindcss/typography`.** The plugin is good, but its
+  entire job here is a few dozen element rules we can read, on the only long-form page type on
+  the site. One fewer dependency. — engineering
+- **Guide pages use schema.org `Article`, not `HowTo`.** `HowTo` wants a machine-readable step
+  list; writing one that did not match the prose would be a structured-data lie for a rich
+  result we do not need. The `citation` array carries every authority, so "this page is
+  sourced" is machine-checkable rather than a badge we drew. — engineering
+- **`related_guides` holds plain slugs, checked at build time.** A self-referential
+  `reference('guides')` cannot be declared inside the same schema object, so the slugs are
+  unchecked by Zod. `assertGuideRelations()` runs on the index page and throws, which fails
+  the build before the link checker would have to catch it after a full render. — engineering
+
+## 2026-11-22 (Node version pinning)
+
+- **`.node-version` is the single source of truth for the Node version.** Cloudflare Pages
+  reads `.node-version`, and `ci-cd.yml` now reads the same file through
+  `actions/setup-node`'s `node-version-file` instead of a hardcoded workflow env var. The
+  previous setup had the version written in two places that nothing forced to agree — a
+  workflow env of `24` and a dashboard setting a human had to remember.
+  **Pages does not read `package.json` → `engines`**, so that field cannot serve this purpose
+  and is advisory only. Pinned to `24.22.3` (current Node 24 LTS, "Krypton"); Astro itself
+  requires `>=22.23.4`, so this is comfortably inside support. — engineering
