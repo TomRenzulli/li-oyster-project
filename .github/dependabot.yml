@@ -1,7 +1,14 @@
 version: 2
+
+# target-branch on every entry: without it Dependabot opens PRs against the
+# DEFAULT branch, which is `main` — production. That bypasses `develop` and the
+# staging deployment entirely, so a dependency bump would reach production on a
+# path no other change is allowed to take. Observed in PR #6 (a TypeScript
+# major bump aimed straight at main) before this was set.
 updates:
   - package-ecosystem: npm
     directory: '/'
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
@@ -16,6 +23,7 @@ updates:
 
   - package-ecosystem: github-actions
     directory: '/'
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday

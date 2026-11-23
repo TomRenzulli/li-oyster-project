@@ -24,8 +24,46 @@ feature/*  --PR-->  develop  --PR-->  main
                               daily Lighthouse audit  (GitHub Actions, alarm)
 ```
 
-Squash-merge everywhere, so `develop` and `main` stay one-commit-per-change and a revert is
-one commit.
+### Merge method depends on the boundary
+
+| Boundary                | Method     | Why                                                                          |
+| ----------------------- | ---------- | ---------------------------------------------------------------------------- |
+| `feature/*` → `develop` | **Squash** | Collapses working commits into one reviewable change; a revert is one commit |
+| `develop` → `main`      | **Rebase** | The commits are already one-per-phase; squashing again collapses them        |
+
+Merge commits are blocked by `required_linear_history`, so squash and rebase are the only two
+options.
+
+**A thing that is easy to get wrong:** GitHub's rebase merge **replays commits with new
+SHAs**. It does _not_ leave `main` and `develop` sharing history — measured after the first
+promotion, each branch was 4 commits "ahead" of the other despite identical trees. Squash
+diverges them too. So neither method keeps the branches convergent on its own, and the only
+reason to prefer rebase here is that it keeps one commit per phase on `main` instead of one
+opaque commit.
+
+### After every promotion, recreate `develop` from `main`
+
+Because of that divergence, a stale merge base makes the _next_ promotion PR re-list every
+commit already merged. The fix is to reset the branch rather than live with it:
+
+```bash
+git fetch origin
+git diff --stat origin/main origin/develop   # MUST be empty before going further
+```
+
+If and only if that diff is empty, the trees are identical and nothing can be lost. Then, via
+the API (the branch is protected, so protection has to come off and go back on):
+
+1. `GET  /repos/:owner/:repo/branches/develop/protection` — **save the response to a file.**
+   This is the restore point; do not skip it.
+2. `DELETE .../branches/develop/protection`
+3. `DELETE /repos/:owner/:repo/git/refs/heads/develop`
+4. `POST /repos/:owner/:repo/git/refs` with `ref=refs/heads/develop` and `sha=<main HEAD>`
+5. `PUT .../branches/develop/protection` with the saved settings
+6. Diff the before/after protection JSON field by field and confirm it is identical.
+
+Do not attempt this with a force push. `allow_force_pushes` is false, and reaching for admin
+bypass to get around branch protection is the exact thing branch protection is for.
 
 ## Jobs
 
@@ -126,6 +164,17 @@ build would still be green. One `grep` closes that gap.
 product's entire credibility. `scripts/verify-data.mjs` has zero dependencies and does not use
 the Zod schema, deliberately: the schema can be weakened in the same PR as the data it
 validates, so a second, independent check guards the invariant.
+
+## Dependabot
+
+Both ecosystems set **`target-branch: develop`**. Without it Dependabot opens PRs against the
+_default_ branch — `main`, i.e. production — which routes a dependency bump around `develop`
+and the staging deployment, on a path no other change is permitted to take. This was live for
+a while and caught when a TypeScript **major** bump (6.x → 7.x) appeared as a PR straight into
+`main`.
+
+A grouped bump still has to pass all five required checks, but `develop` first means it gets a
+real staging deployment and a Lighthouse run against it before it can reach the apex.
 
 ## Secrets
 
